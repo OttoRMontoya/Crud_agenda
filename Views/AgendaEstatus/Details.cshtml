@@ -1,0 +1,122 @@
+@model Crud_agenda.Models.AgendaEstatus
+
+@{
+    ViewBag.Title = "Detalles del Estado";
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-eye"></i> Detalles del Estado
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">ID del Estado</h6>
+                        <p class="lead">
+                            <span class="badge bg-primary">@Model.IdEstatus</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Estado</h6>
+                        <p class="lead">
+                            @if (Model.Activo)
+                            {
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Activo
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> Inactivo
+                                </span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h6 class="text-muted mb-2">Nombre del Estado</h6>
+                        <p class="fs-5">@Model.NombreEstatus</p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h6 class="text-muted mb-2">Descripción</h6>
+                        @if (!string.IsNullOrEmpty(Model.Descripcion))
+                        {
+                            <p>@Model.Descripcion</p>
+                        }
+                        else
+                        {
+                            <p class="text-muted"><em>Sin descripción</em></p>
+                        }
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Fecha de Creación</h6>
+                        <p>@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm:ss")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Última Modificación</h6>
+                        @if (Model.FechaModificacion.HasValue)
+                        {
+                            <p>@Model.FechaModificacion.Value.ToString("dd/MM/yyyy HH:mm:ss")</p>
+                        }
+                        else
+                        {
+                            <p class="text-muted"><em>Sin modificaciones</em></p>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    @Html.ActionLink("Editar", "Edit", new { id = Model.IdEstatus }, new { @class = "btn btn-warning" })
+                    @Html.ActionLink("Eliminar", "Delete", new { id = Model.IdEstatus }, new { @class = "btn btn-danger" })
+                    @Html.ActionLink("Volver", "Index", new { }, new { @class = "btn btn-secondary" })
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        padding: 0.5rem 0.75rem;
+        font-weight: 500;
+        border-radius: 0.35rem;
+        font-size: 0.9rem;
+    }
+
+    .lead {
+        margin: 0;
+    }
+
+    .text-muted {
+        color: #6c757d;
+    }
+
+    .fs-5 {
+        font-size: 1.25rem;
+    }
+
+    .gap-2 {
+        gap: 0.5rem;
+    }
+
+    p {
+        margin-bottom: 0.5rem;
+    }
+</style>

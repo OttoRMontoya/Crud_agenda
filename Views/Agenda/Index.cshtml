@@ -1,0 +1,1031 @@
+@using Crud_agenda.Models
+@{
+    ViewBag.Title = "Calendario de Citas";
+    var estatusList = ViewBag.EstatusList as List<AgendaEstatus> ?? new List<AgendaEstatus>();
+    var etiquetas = ViewBag.Etiquetas as List<EtiquetaOption> ?? AgendaEtiquetas.Opciones;
+}
+
+<div class="calendar-page">
+    <div class="calendar-header mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h2 class="calendar-title mb-1">
+                    <i class="bi bi-calendar3"></i> Calendario de Citas
+                </h2>
+                <p class="text-muted mb-0">Vista diaria por clínica — seleccione un horario en la columna de la clínica deseada</p>
+            </div>
+            <button type="button" class="btn btn-primary btn-lg" id="btnNuevaCita">
+                <i class="bi bi-plus-lg"></i> Nueva Cita
+            </button>
+        </div>
+    </div>
+
+    <div class="card calendar-card">
+        <div class="card-body p-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+                <div class="etiquetas-leyenda">
+                    @foreach (var et in etiquetas)
+                    {
+                        <span class="leyenda-item">
+                            <span class="leyenda-color" style="background-color: @et.Color;"></span>
+                            @et.Nombre
+                        </span>
+                    }
+                </div>
+                <div class="calendar-filters d-flex flex-wrap gap-3">
+                    <div>
+                        <label class="form-label mb-1" for="filtroClinica">
+                            <i class="bi bi-hospital"></i> Filtrar por clínica
+                        </label>
+                        <select id="filtroClinica" class="form-select form-select-sm">
+                            <option value="">-- Todas las clínicas --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label mb-1" for="filtroDoctor">
+                            <i class="bi bi-person-badge"></i> Filtrar por doctor
+                        </label>
+                        <select id="filtroDoctor" class="form-select form-select-sm">
+                            <option value="">-- Todos los doctores --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cita -->
+<div class="modal fade" id="modalCita" tabindex="-1" aria-labelledby="modalCitaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient">
+                <h5 class="modal-title" id="modalCitaLabel">
+                    <i class="bi bi-calendar-plus"></i> <span id="modalTitulo">Nueva Cita</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalAlert" class="alert alert-danger d-none" role="alert"></div>
+                <form id="formCita">
+                    <input type="hidden" id="IdAgendaCita" name="IdAgendaCita" value="0" />
+
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabCita" type="button">Cita</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabContacto" type="button">Contacto</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMedico" type="button">Datos Médicos</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="tabCita">
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Asunto <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="Asunto" name="Asunto" maxlength="50" required placeholder="Ej: Consulta general" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Etiqueta</label>
+                                    <select class="form-select" id="Etiqueta" name="Etiqueta">
+                                        @foreach (var et in etiquetas)
+                                        {
+                                            <option value="@et.Id">@et.Nombre</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Inicio <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="Inicio" name="Inicio" required />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Fin <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="Fin" name="Fin" required />
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="TodoelDia" name="TodoelDia" />
+                                        <label class="form-check-label" for="TodoelDia">Todo el día</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Lugar</label>
+                                    <input type="text" class="form-control" id="Lugar" name="Lugar" maxlength="50" placeholder="Consultorio, sala, etc." />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Estatus</label>
+                                    <select class="form-select" id="Estatus" name="Estatus">
+                                        @if (estatusList.Any())
+                                        {
+                                            foreach (var est in estatusList)
+                                            {
+                                                <option value="@est.IdEstatus">@est.NombreEstatus</option>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <option value="1">Pendiente</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Descripción</label>
+                                    <textarea class="form-control" id="Descripcion" name="Descripcion" rows="3" maxlength="250" placeholder="Notas adicionales de la cita..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="EnviaRecordatorio" name="EnviaRecordatorio" />
+                                        <label class="form-check-label" for="EnviaRecordatorio">Enviar recordatorio</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="tabContacto">
+                            <input type="hidden" id="Codigo" name="Codigo" value="0" />
+
+                            <div class="mb-3">
+                                <label class="form-label" for="buscarPaciente">
+                                    <i class="bi bi-search"></i> Buscar paciente
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="buscarPaciente" placeholder="Nombre, código, identificación, teléfono o correo..." />
+                                    <button type="button" class="btn btn-primary" id="btnBuscarPaciente">Buscar</button>
+                                </div>
+                            </div>
+
+                            <div id="listaPacientesWrap" class="table-responsive patient-list-wrap mb-3">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Cód.</th>
+                                            <th>Paciente</th>
+                                            <th>Identificación</th>
+                                            <th>Teléfono</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="listaPacientes">
+                                        <tr><td colspan="5" class="text-muted text-center py-3">Escriba y busque un paciente</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="pacienteSeleccionado" class="alert alert-success d-none py-2 mb-3">
+                                <i class="bi bi-person-check"></i>
+                                Paciente seleccionado: <strong id="pacienteSeleccionadoNombre"></strong>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="btnQuitarPaciente">Quitar</button>
+                            </div>
+
+                            <hr class="my-3" />
+                            <p class="text-muted small mb-2">Datos de contacto (se llenan al seleccionar paciente)</p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Contacto / Paciente <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="Contacto" name="Contacto" maxlength="100" required readonly />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Cód. Paciente</label>
+                                    <input type="text" class="form-control" id="CodigoPacienteDisplay" readonly />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">No. Ficha Ingreso</label>
+                                    <input type="number" class="form-control" id="NoFichaIngreso" name="NoFichaIngreso" value="0" min="0" readonly />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Correo electrónico</label>
+                                    <input type="email" class="form-control" id="EMail" name="EMail" maxlength="100" readonly />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Teléfono 1</label>
+                                    <input type="text" class="form-control" id="Telefono1" name="Telefono1" maxlength="12" readonly />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Teléfono 2 (Trabajo)</label>
+                                    <input type="text" class="form-control" id="Telefono2" name="Telefono2" maxlength="12" readonly />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Celular</label>
+                                    <input type="text" class="form-control" id="Celular" name="Celular" maxlength="12" readonly />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="tabMedico">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Empresa <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="Empresa" name="Empresa" required>
+                                        <option value="">-- Seleccione empresa --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Clínica <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="Clinica" name="Clinica" required>
+                                        <option value="">-- Seleccione clínica --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Doctor</label>
+                                    <select class="form-select" id="CodigoDoctor" name="CodigoDoctor">
+                                        <option value="">-- Seleccione doctor --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Id Calendario</label>
+                                    <input type="number" class="form-control" id="IdCalendario" name="IdCalendario" value="1" min="0" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-danger d-none" id="btnEliminarCita">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+                <div class="ms-auto d-flex gap-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarCita">
+                        <i class="bi bi-check-lg"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section styles {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.20/index.global.min.css" rel="stylesheet" />
+    <style>
+        .calendar-page .calendar-title {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .calendar-card {
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .calendar-filters {
+            min-width: 200px;
+        }
+
+        .calendar-filters .form-select {
+            min-width: 220px;
+        }
+
+        .etiquetas-leyenda {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .leyenda-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .leyenda-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        #calendar {
+            min-height: 700px;
+        }
+
+        .fc {
+            --fc-button-bg-color: #667eea;
+            --fc-button-border-color: #667eea;
+            --fc-button-hover-bg-color: #764ba2;
+            --fc-button-hover-border-color: #764ba2;
+            --fc-button-active-bg-color: #5a67d8;
+            --fc-button-active-border-color: #5a67d8;
+            --fc-today-bg-color: rgba(102, 126, 234, 0.06);
+            --fc-event-border-color: transparent;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .fc .fc-event {
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 1px 2px;
+            font-size: 0.8rem;
+        }
+
+        /* Encabezados de clínica estilo referencia */
+        .fc-col-header-cell {
+            vertical-align: top;
+        }
+
+        .fc-resource-header {
+            text-align: center;
+            padding: 0 !important;
+        }
+
+        .resource-clinic-name {
+            background: #fff;
+            color: #333;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 8px 4px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .resource-clinic-date {
+            background: linear-gradient(135deg, #f5a623 0%, #f39c12 100%);
+            color: #fff;
+            font-size: 0.78rem;
+            padding: 6px 4px;
+            text-transform: capitalize;
+        }
+
+        /* Colores alternados por columna de clínica */
+        .fc-timegrid-col.resource-col-even {
+            background-color: #e8f4fc;
+        }
+
+        .fc-timegrid-col.resource-col-odd {
+            background-color: #f0ebf8;
+        }
+
+        .fc .fc-timegrid-slot-label {
+            font-size: 0.75rem;
+        }
+
+        .modal-header-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #667eea;
+            border-color: #dee2e6 #dee2e6 #fff;
+            font-weight: 600;
+        }
+
+        .nav-tabs .nav-link {
+            color: #666;
+        }
+
+        .patient-list-wrap {
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 0.4rem;
+        }
+
+        .patient-list-wrap .btn-select-paciente {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+        }
+    </style>
+}
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.20/index.global.min.js"></script>
+   @* <script src="https://cdn.jsdelivr.net/npm/@@fullcalendar/core@6.1.20/locales/es.global.min.js"></script>*@
+    <script>
+        (function () {
+            const urls = {
+                events: '@Url.Action("GetEvents", "Agenda")',
+                save: '@Url.Action("SaveCita", "Agenda")',
+                delete: '@Url.Action("DeleteCita", "Agenda")',
+                updateDates: '@Url.Action("UpdateDates", "Agenda")',
+                empresas: '@Url.Action("GetEmpresas", "Agenda")',
+                clinicas: '@Url.Action("GetClinicas", "Agenda")',
+                doctores: '@Url.Action("GetDoctores", "Agenda")',
+                resources: '@Url.Action("GetResources", "Agenda")',
+                doctoresFiltro: '@Url.Action("GetDoctoresFiltro", "Agenda")',
+                clinicasFiltro: '@Url.Action("GetClinicasFiltro", "Agenda")',
+                pacientesSearch: '@Url.Action("Search", "Pacientes")',
+                pacienteGet: '@Url.Action("GetPaciente", "Pacientes")'
+            };
+
+            const selEmpresa = document.getElementById('Empresa');
+            const selClinica = document.getElementById('Clinica');
+            const selDoctor = document.getElementById('CodigoDoctor');
+            const filtroDoctor = document.getElementById('filtroDoctor');
+            const filtroClinica = document.getElementById('filtroClinica');
+
+            const etiquetaColors = {
+                @foreach (var et in etiquetas)
+                {
+                    @:@et.Id: '@et.Color',
+                }
+            };
+
+            const modalEl = document.getElementById('modalCita');
+            const modal = new bootstrap.Modal(modalEl);
+            const form = document.getElementById('formCita');
+            const modalAlert = document.getElementById('modalAlert');
+            const btnEliminar = document.getElementById('btnEliminarCita');
+            const modalTitulo = document.getElementById('modalTitulo');
+            let calendar;
+            let calendarResources = [];
+
+            function pad(n) { return n < 10 ? '0' + n : n; }
+
+            function toLocalInputValue(date) {
+                if (!date || isNaN(date.getTime())) return '';
+                return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+                    'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+            }
+
+            function parseDateValue(val) {
+                if (!val) return null;
+                if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+                if (typeof val === 'string') {
+                    var msMatch = val.match(/\/Date\((-?\d+)([+-]\d+)?\)\//);
+                    if (msMatch) return new Date(parseInt(msMatch[1], 10));
+                    var d = new Date(val);
+                    return isNaN(d.getTime()) ? null : d;
+                }
+                return null;
+            }
+
+            function setFechaCampos(inicioDate, finDate, todoelDia) {
+                if (inicioDate && !isNaN(inicioDate.getTime())) {
+                    document.getElementById('Inicio').value = toLocalInputValue(inicioDate);
+                }
+                if (finDate && !isNaN(finDate.getTime())) {
+                    document.getElementById('Fin').value = toLocalInputValue(finDate);
+                }
+                if (todoelDia !== undefined && todoelDia !== null) {
+                    document.getElementById('TodoelDia').checked = !!todoelDia;
+                }
+            }
+
+            function formatResourceDate(date) {
+                return date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+
+            function showAlert(message, isError) {
+                modalAlert.textContent = message;
+                modalAlert.classList.remove('d-none', 'alert-danger', 'alert-success');
+                modalAlert.classList.add(isError ? 'alert-danger' : 'alert-success');
+            }
+
+            function hideAlert() {
+                modalAlert.classList.add('d-none');
+            }
+
+            function prop(obj, key) {
+                if (!obj) return null;
+                if (obj[key] !== undefined && obj[key] !== null) return obj[key];
+                const pascal = key.charAt(0).toUpperCase() + key.slice(1);
+                return obj[pascal];
+            }
+
+            function fillSelect(selectEl, items, selectedId, placeholder, labelFn, withEmpresa) {
+                selectEl.innerHTML = '<option value="">' + placeholder + '</option>';
+                (items || []).forEach(function (item) {
+                    const opt = document.createElement('option');
+                    const itemId = prop(item, 'id');
+                    opt.value = itemId;
+                    opt.textContent = labelFn(item);
+                    if (withEmpresa) {
+                        const empId = prop(item, 'empresaId');
+                        if (empId) opt.setAttribute('data-empresa-id', empId);
+                    }
+                    if (selectedId && parseInt(selectedId) === parseInt(itemId)) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
+            }
+
+            function loadEmpresas(selectedId) {
+                return $.getJSON(urls.empresas).then(function (data) {
+                    fillSelect(selEmpresa, data, selectedId, '-- Seleccione empresa --', function (x) { return prop(x, 'nombre'); });
+                });
+            }
+
+            function loadClinicas(empresaId, selectedId) {
+                if (!empresaId) {
+                    fillSelect(selClinica, [], null, '-- Seleccione clínica --', function (x) { return prop(x, 'nombre'); });
+                    return $.Deferred().resolve().promise();
+                }
+                return $.getJSON(urls.clinicas, { empresaId: empresaId }).then(function (data) {
+                    fillSelect(selClinica, data, selectedId, '-- Seleccione clínica --', function (x) { return prop(x, 'nombre'); }, true);
+                });
+            }
+
+            function loadDoctores(empresaId, clinicaId, selectedId) {
+                const eId = empresaId || '';
+                const cId = clinicaId || '';
+                if (!eId && !cId) {
+                    fillSelect(selDoctor, [], null, '-- Seleccione doctor --', function (x) { return prop(x, 'nombre'); });
+                    return $.Deferred().resolve().promise();
+                }
+                return $.getJSON(urls.doctores, { empresaId: eId, clinicaId: cId }).then(function (data) {
+                    fillSelect(selDoctor, data, selectedId, '-- Seleccione doctor --', function (x) {
+                        const nombre = prop(x, 'nombre');
+                        const esp = prop(x, 'especialidad');
+                        return esp ? nombre + ' - ' + esp : nombre;
+                    });
+                });
+            }
+
+            function loadDoctoresFiltro() {
+                return $.getJSON(urls.doctoresFiltro).then(function (data) {
+                    fillSelect(filtroDoctor, data, null, '-- Todos los doctores --', function (x) {
+                        const nombre = prop(x, 'nombre');
+                        const esp = prop(x, 'especialidad');
+                        return esp ? nombre + ' - ' + esp : nombre;
+                    });
+                });
+            }
+
+            function loadClinicasFiltro() {
+                return $.getJSON(urls.clinicasFiltro).then(function (data) {
+                    fillSelect(filtroClinica, data, null, '-- Todas las clínicas --', function (x) { return prop(x, 'nombre'); });
+                });
+            }
+
+            function getClinicaEmpresaId() {
+                const opt = selClinica.options[selClinica.selectedIndex];
+                if (opt && opt.getAttribute('data-empresa-id')) {
+                    return opt.getAttribute('data-empresa-id');
+                }
+                return selEmpresa.value;
+            }
+
+            function preselectClinica(clinicaId) {
+                if (!clinicaId) return $.Deferred().resolve().promise();
+
+                function applyPreselect(empresaId) {
+                    return loadEmpresas(empresaId).then(function () {
+                        return loadClinicas(empresaId || selEmpresa.value, clinicaId);
+                    }).then(function () {
+                        const emp = selEmpresa.value || empresaId || getClinicaEmpresaId();
+                        return loadDoctores(emp, clinicaId);
+                    });
+                }
+
+                const resource = calendarResources.find(function (r) { return r.id == clinicaId; });
+                const empresaFromResource = resource ? prop(resource, 'empresaId') : null;
+                if (empresaFromResource) {
+                    return applyPreselect(empresaFromResource);
+                }
+
+                return $.getJSON(urls.clinicas, {}).then(function (data) {
+                    const clinica = (data || []).find(function (c) { return prop(c, 'id') == clinicaId; });
+                    return applyPreselect(clinica ? prop(clinica, 'empresaId') : '');
+                });
+            }
+
+            function limpiarPacienteSeleccion() {
+                document.getElementById('Codigo').value = '0';
+                document.getElementById('Contacto').value = '';
+                document.getElementById('CodigoPacienteDisplay').value = '';
+                document.getElementById('NoFichaIngreso').value = '0';
+                document.getElementById('EMail').value = '';
+                document.getElementById('Telefono1').value = '';
+                document.getElementById('Telefono2').value = '';
+                document.getElementById('Celular').value = '';
+                document.getElementById('pacienteSeleccionado').classList.add('d-none');
+                document.getElementById('pacienteSeleccionadoNombre').textContent = '';
+            }
+
+            function aplicarPaciente(p) {
+                const codigo = prop(p, 'codigo');
+                document.getElementById('Codigo').value = codigo || 0;
+                document.getElementById('Contacto').value = prop(p, 'contacto') || prop(p, 'nombreCompleto') || '';
+                document.getElementById('CodigoPacienteDisplay').value = prop(p, 'codigoPaciente') || '';
+                document.getElementById('NoFichaIngreso').value = prop(p, 'noFichaIngreso') || 0;
+                document.getElementById('EMail').value = prop(p, 'eMail') || prop(p, 'email') || '';
+                document.getElementById('Telefono1').value = prop(p, 'telefono1') || '';
+                document.getElementById('Telefono2').value = prop(p, 'telefono2') || '';
+                document.getElementById('Celular').value = prop(p, 'celular') || '';
+                document.getElementById('pacienteSeleccionadoNombre').textContent = prop(p, 'nombreCompleto') || prop(p, 'contacto') || '';
+                document.getElementById('pacienteSeleccionado').classList.remove('d-none');
+            }
+
+            function renderListaPacientes(items) {
+                const tbody = document.getElementById('listaPacientes');
+                tbody.innerHTML = '';
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center py-3">No se encontraron pacientes</td></tr>';
+                    return;
+                }
+                items.forEach(function (p) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + (prop(p, 'codigoPaciente') || prop(p, 'codigo')) + '</td>' +
+                        '<td>' + (prop(p, 'nombreCompleto') || '') + '</td>' +
+                        '<td>' + (prop(p, 'noIdentificacion') || '-') + '</td>' +
+                        '<td>' + (prop(p, 'celular') || prop(p, 'telefono1') || '-') + '</td>' +
+                        '<td><button type="button" class="btn btn-primary btn-select-paciente">Seleccionar</button></td>';
+                    tr.querySelector('.btn-select-paciente').addEventListener('click', function () {
+                        aplicarPaciente(p);
+                    });
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function buscarPacientes() {
+                const q = document.getElementById('buscarPaciente').value.trim();
+                $.getJSON(urls.pacientesSearch, { q: q, limit: 30 }, function (data) {
+                    renderListaPacientes(data);
+                });
+            }
+
+            function cargarPacientePorCodigo(codigo) {
+                if (!codigo || codigo <= 0) return $.Deferred().resolve().promise();
+                return $.getJSON(urls.pacienteGet, { id: codigo }, function (result) {
+                    if (result.success && result.data) {
+                        aplicarPaciente(result.data);
+                    }
+                });
+            }
+
+            document.getElementById('btnBuscarPaciente').addEventListener('click', buscarPacientes);
+            document.getElementById('buscarPaciente').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); buscarPacientes(); }
+            });
+            document.getElementById('btnQuitarPaciente').addEventListener('click', limpiarPacienteSeleccion);
+
+            document.querySelector('[data-bs-target="#tabContacto"]').addEventListener('shown.bs.tab', function () {
+                if (document.getElementById('listaPacientes').rows.length <= 1) {
+                    buscarPacientes();
+                }
+            });
+
+            function resetForm() {
+                form.reset();
+                document.getElementById('IdAgendaCita').value = '0';
+                document.getElementById('IdCalendario').value = '1';
+                document.getElementById('Etiqueta').value = '1';
+                document.getElementById('buscarPaciente').value = '';
+                limpiarPacienteSeleccion();
+                document.getElementById('listaPacientes').innerHTML = '<tr><td colspan="5" class="text-muted text-center py-3">Escriba y busque un paciente</td></tr>';
+                hideAlert();
+                btnEliminar.classList.add('d-none');
+                modalTitulo.textContent = 'Nueva Cita';
+                new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
+                loadEmpresas();
+                loadClinicas(null);
+                loadDoctores(null);
+            }
+
+            function fillForm(data, fcStart, fcEnd, fcAllDay) {
+                document.getElementById('IdAgendaCita').value = data.IdAgendaCita || data.idAgendaCita || 0;
+                document.getElementById('IdCalendario').value = data.IdCalendario || data.idCalendario || 1;
+                document.getElementById('Codigo').value = data.Codigo || data.codigo || 0;
+                document.getElementById('NoFichaIngreso').value = data.NoFichaIngreso || data.noFichaIngreso || 0;
+                document.getElementById('Contacto').value = data.Contacto || data.contacto || '';
+                document.getElementById('EMail').value = data.EMail || data.eMail || '';
+                document.getElementById('Telefono1').value = data.Telefono1 || data.telefono1 || '';
+                document.getElementById('Telefono2').value = data.Telefono2 || data.telefono2 || '';
+                document.getElementById('Celular').value = data.Celular || data.celular || '';
+
+                var inicioDate = fcStart ? new Date(fcStart) : parseDateValue(data.Inicio || data.inicio);
+                var finDate = fcEnd ? new Date(fcEnd) : parseDateValue(data.Fin || data.fin);
+                if (!finDate && inicioDate) {
+                    finDate = new Date(inicioDate.getTime() + 60 * 60 * 1000);
+                }
+                var todoelDia = fcAllDay !== undefined && fcAllDay !== null
+                    ? fcAllDay
+                    : (data.TodoelDia || data.todoelDia || false);
+                setFechaCampos(inicioDate, finDate, todoelDia);
+
+                document.getElementById('Asunto').value = data.Asunto || data.asunto || '';
+                document.getElementById('Descripcion').value = data.Descripcion || data.descripcion || '';
+                document.getElementById('Lugar').value = data.Lugar || data.lugar || '';
+                document.getElementById('Etiqueta').value = data.Etiqueta || data.etiqueta || 1;
+                document.getElementById('Estatus').value = data.Estatus || data.estatus || 1;
+                document.getElementById('EnviaRecordatorio').checked = data.EnviaRecordatorio || data.enviaRecordatorio || false;
+
+                const codigoPaciente = data.Codigo || data.codigo || 0;
+                if (codigoPaciente > 0) {
+                    cargarPacientePorCodigo(codigoPaciente);
+                } else {
+                    document.getElementById('Codigo').value = '0';
+                    document.getElementById('CodigoPacienteDisplay').value = '';
+                    document.getElementById('pacienteSeleccionado').classList.add('d-none');
+                }
+
+                const empresaId = data.Empresa || data.empresa || '';
+                const clinicaId = data.Clinica || data.clinica || '';
+                const doctorId = data.CodigoDoctor || data.codigoDoctor || '';
+
+                return loadEmpresas(empresaId).then(function () {
+                    return loadClinicas(empresaId, clinicaId);
+                }).then(function () {
+                    return loadDoctores(empresaId, clinicaId, doctorId);
+                });
+            }
+
+            function getFormData() {
+                return {
+                    IdAgendaCita: parseInt(document.getElementById('IdAgendaCita').value) || 0,
+                    IdCalendario: parseInt(document.getElementById('IdCalendario').value) || 1,
+                    Empresa: parseInt(document.getElementById('Empresa').value) || 0,
+                    CodigoDoctor: parseInt(document.getElementById('CodigoDoctor').value) || 0,
+                    Codigo: parseInt(document.getElementById('Codigo').value) || 0,
+                    Clinica: parseInt(document.getElementById('Clinica').value) || 0,
+                    NoFichaIngreso: parseInt(document.getElementById('NoFichaIngreso').value) || 0,
+                    Contacto: document.getElementById('Contacto').value.trim(),
+                    Inicio: document.getElementById('Inicio').value,
+                    Fin: document.getElementById('Fin').value,
+                    Asunto: document.getElementById('Asunto').value.trim(),
+                    Descripcion: document.getElementById('Descripcion').value.trim(),
+                    Lugar: document.getElementById('Lugar').value.trim(),
+                    Etiqueta: parseInt(document.getElementById('Etiqueta').value) || 1,
+                    Estatus: parseInt(document.getElementById('Estatus').value) || 1,
+                    TodoelDia: document.getElementById('TodoelDia').checked,
+                    Telefono1: document.getElementById('Telefono1').value.trim(),
+                    Telefono2: document.getElementById('Telefono2').value.trim(),
+                    Celular: document.getElementById('Celular').value.trim(),
+                    EMail: document.getElementById('EMail').value.trim(),
+                    EnviaRecordatorio: document.getElementById('EnviaRecordatorio').checked
+                };
+            }
+
+            function openNewCita(start, end, allDay, clinicaId) {
+                form.reset();
+                document.getElementById('IdAgendaCita').value = '0';
+                document.getElementById('IdCalendario').value = '1';
+                document.getElementById('Etiqueta').value = '1';
+                document.getElementById('buscarPaciente').value = '';
+                limpiarPacienteSeleccion();
+                document.getElementById('listaPacientes').innerHTML = '<tr><td colspan="5" class="text-muted text-center py-3">Escriba y busque un paciente</td></tr>';
+                hideAlert();
+                btnEliminar.classList.add('d-none');
+                modalTitulo.textContent = 'Nueva Cita';
+                new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
+
+                const startDate = start ? new Date(start) : new Date();
+                let endDate = end ? new Date(end) : new Date(startDate.getTime() + 60 * 60 * 1000);
+
+                if (allDay) {
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + 1);
+                    document.getElementById('TodoelDia').checked = true;
+                }
+
+                document.getElementById('Inicio').value = toLocalInputValue(startDate);
+                document.getElementById('Fin').value = toLocalInputValue(endDate);
+
+                if (clinicaId) {
+                    preselectClinica(clinicaId).always(function () { modal.show(); });
+                } else {
+                    loadEmpresas().then(function () {
+                        loadClinicas(null);
+                        return loadDoctores(null);
+                    }).always(function () { modal.show(); });
+                }
+            }
+
+            function openEditCita(props, fcStart, fcEnd, fcAllDay) {
+                hideAlert();
+                new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
+                fillForm(props, fcStart, fcEnd, fcAllDay).then(function () {
+                    modalTitulo.textContent = 'Editar Cita';
+                    btnEliminar.classList.remove('d-none');
+                    modal.show();
+                });
+            }
+
+            function getSelectedDoctorFilter() {
+                const val = filtroDoctor.value;
+                return val ? parseInt(val) : '';
+            }
+
+            function getSelectedClinicaFilter() {
+                const val = filtroClinica.value;
+                return val ? val.toString() : '';
+            }
+
+            function refetchCalendar() {
+                calendar.refetchResources();
+                calendar.refetchEvents();
+            }
+
+            function postUpdateEvent(info) {
+                const endDate = info.event.end || info.event.start;
+                const newResource = info.newResource || (info.event.getResources && info.event.getResources()[0]);
+                const clinicaId = newResource ? newResource.id : null;
+
+                $.post(urls.updateDates, {
+                    id: info.event.id,
+                    inicio: info.event.start.toISOString(),
+                    fin: endDate.toISOString(),
+                    todoelDia: info.event.allDay,
+                    clinica: clinicaId
+                }, function (result) {
+                    if (!result.success) {
+                        alert(result.message || 'No se pudo actualizar.');
+                        info.revert();
+                    }
+                }).fail(function () {
+                    info.revert();
+                });
+            }
+
+            selEmpresa.addEventListener('change', function () {
+                const empresaId = this.value;
+                loadClinicas(empresaId).then(function () {
+                    loadDoctores(empresaId, selClinica.value);
+                });
+            });
+
+            selClinica.addEventListener('change', function () {
+                const clinicaId = this.value;
+                const empresaFromClinica = getClinicaEmpresaId();
+                if (empresaFromClinica && !selEmpresa.value) {
+                    selEmpresa.value = empresaFromClinica;
+                }
+                loadDoctores(selEmpresa.value || empresaFromClinica, clinicaId);
+            });
+
+            filtroDoctor.addEventListener('change', function () {
+                calendar.refetchEvents();
+            });
+
+            filtroClinica.addEventListener('change', function () {
+                refetchCalendar();
+            });
+
+            document.getElementById('btnNuevaCita').addEventListener('click', function () {
+                openNewCita(calendar.getDate(), null, false, null);
+            });
+
+            document.getElementById('btnGuardarCita').addEventListener('click', function () {
+                hideAlert();
+                const data = getFormData();
+
+                if (!data.Asunto) { showAlert('El asunto es requerido.', true); return; }
+                if (!data.Contacto) { showAlert('Debe seleccionar un paciente.', true); return; }
+                if (!data.Codigo) { showAlert('Debe seleccionar un paciente de la lista.', true); return; }
+                if (!data.Empresa) { showAlert('Debe seleccionar una empresa.', true); return; }
+                if (!data.Clinica) { showAlert('Debe seleccionar una clínica.', true); return; }
+
+                $.ajax({
+                    url: urls.save,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (result) {
+                        if (result.success) {
+                            modal.hide();
+                            calendar.refetchEvents();
+                        } else {
+                            showAlert(result.message || 'Error al guardar.', true);
+                        }
+                    },
+                    error: function () {
+                        showAlert('Error de comunicación con el servidor.', true);
+                    }
+                });
+            });
+
+            btnEliminar.addEventListener('click', function () {
+                const id = parseInt(document.getElementById('IdAgendaCita').value);
+                if (!id || !confirm('¿Está seguro de eliminar esta cita?')) return;
+
+                $.post(urls.delete, { id: id }, function (result) {
+                    if (result.success) {
+                        modal.hide();
+                        calendar.refetchEvents();
+                    } else {
+                        showAlert(result.message || 'Error al eliminar.', true);
+                    }
+                });
+            });
+
+            document.getElementById('TodoelDia').addEventListener('change', function () {
+                const inicio = document.getElementById('Inicio');
+                const fin = document.getElementById('Fin');
+                if (this.checked) {
+                    const d = new Date(inicio.value);
+                    d.setHours(0, 0, 0, 0);
+                    inicio.value = toLocalInputValue(d);
+                    const dEnd = new Date(d);
+                    dEnd.setDate(dEnd.getDate() + 1);
+                    fin.value = toLocalInputValue(dEnd);
+                }
+            });
+
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                locale: 'es',
+                initialView: 'resourceTimeGridDay',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'resourceTimeGridDay,dayGridMonth,listWeek'
+                },
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    day: 'Día',
+                    list: 'Lista'
+                },
+                slotMinTime: '06:00:00',
+                slotMaxTime: '22:00:00',
+                slotDuration: '00:30:00',
+                allDaySlot: false,
+                editable: true,
+                selectable: true,
+                selectMirror: true,
+                nowIndicator: true,
+                height: 'auto',
+                resourceOrder: 'title',
+                resources: function (fetchInfo, successCallback, failureCallback) {
+                    $.getJSON(urls.resources, function (data) {
+                        calendarResources = data || [];
+                        const filtro = getSelectedClinicaFilter();
+                        const list = filtro
+                            ? calendarResources.filter(function (r) { return r.id == filtro; })
+                            : calendarResources;
+                        successCallback(list);
+                    }).fail(function () {
+                        failureCallback();
+                    });
+                },
+                resourceLabelContent: function (arg) {
+                    const dateStr = formatResourceDate(calendar.getDate());
+                    return {
+                        html: '<div class="resource-clinic-name">' + arg.resource.title + '</div>' +
+                              '<div class="resource-clinic-date">' + dateStr + '</div>'
+                    };
+                },
+                resourceLabelDidMount: function (arg) {
+                    arg.el.classList.add('fc-resource-header');
+                },
+                events: function (info, successCallback, failureCallback) {
+                    $.ajax({
+                        url: urls.events,
+                        data: {
+                            start: info.startStr,
+                            end: info.endStr,
+                            codigoDoctor: getSelectedDoctorFilter(),
+                            clinica: filtroClinica.value || ''
+                        },
+                        success: function (data) {
+                            successCallback(data);
+                        },
+                        error: function () {
+                            failureCallback();
+                        }
+                    });
+                },
+                select: function (info) {
+                    const clinicaId = info.resource ? info.resource.id : null;
+                    openNewCita(info.start, info.end, info.allDay, clinicaId);
+                    calendar.unselect();
+                },
+                eventClick: function (info) {
+                    if (info.event.extendedProps) {
+                        openEditCita(
+                            info.event.extendedProps,
+                            info.event.start,
+                            info.event.end,
+                            info.event.allDay
+                        );
+                    }
+                },
+                eventDrop: postUpdateEvent,
+                eventResize: postUpdateEvent,
+                eventDidMount: function (info) {
+                    const props = info.event.extendedProps || {};
+                    const etiqueta = props.Etiqueta || props.etiqueta;
+                    if (etiqueta && etiquetaColors[etiqueta]) {
+                        info.el.style.backgroundColor = etiquetaColors[etiqueta];
+                        info.el.style.borderColor = etiquetaColors[etiqueta];
+                    }
+                },
+                resourceLaneDidMount: function (arg) {
+                    const idx = arg.resource.getIndex();
+                    arg.el.classList.add(idx % 2 === 0 ? 'resource-col-even' : 'resource-col-odd');
+                }
+            });
+
+            calendar.render();
+            loadClinicasFiltro();
+            loadDoctoresFiltro();
+            modalEl.addEventListener('hidden.bs.modal', resetForm);
+        })();
+    </script>
+}

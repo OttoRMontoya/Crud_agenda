@@ -1,0 +1,43 @@
+@model List<Crud_agenda.Models.AgendaClinica>
+@{ ViewBag.Title = "Clínicas"; }
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-hospital"></i> Catálogo de Clínicas</h5>
+        @Html.ActionLink("Nueva Clínica", "Create", null, new { @class = "btn btn-light btn-sm" })
+    </div>
+    <div class="card-body">
+        @if (Model.Count == 0)
+        {
+            <div class="alert alert-info">No hay clínicas registradas. <a href="@Url.Action("Create")">Crear una</a></div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr><th>ID</th><th>Clínica</th><th>Empresa</th><th>Dirección</th><th>Estado</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><span class="badge bg-primary">@item.IdClinica</span></td>
+                                <td>@item.NombreClinica</td>
+                                <td>@(item.Empresa != null ? item.Empresa.NombreEmpresa : "-")</td>
+                                <td>@(string.IsNullOrEmpty(item.Direccion) ? "-" : item.Direccion)</td>
+                                <td>@(item.Activo ? Html.Raw("<span class='badge bg-success'>Activo</span>") : Html.Raw("<span class='badge bg-danger'>Inactivo</span>"))</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        @Html.ActionLink("Editar", "Edit", new { id = item.IdClinica }, new { @class = "btn btn-warning" })
+                                        @Html.ActionLink("Eliminar", "Delete", new { id = item.IdClinica }, new { @class = "btn btn-danger" })
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

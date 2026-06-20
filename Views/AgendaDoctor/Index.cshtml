@@ -1,0 +1,44 @@
+@model List<Crud_agenda.Models.AgendaDoctor>
+@{ ViewBag.Title = "Doctores"; }
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-person-badge"></i> Catálogo de Doctores</h5>
+        @Html.ActionLink("Nuevo Doctor", "Create", null, new { @class = "btn btn-light btn-sm" })
+    </div>
+    <div class="card-body">
+        @if (Model.Count == 0)
+        {
+            <div class="alert alert-info">No hay doctores registrados. <a href="@Url.Action("Create")">Crear uno</a></div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr><th>Código</th><th>Doctor</th><th>Especialidad</th><th>Empresa</th><th>Clínica</th><th>Estado</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><span class="badge bg-primary">@item.CodigoDoctor</span></td>
+                                <td>@item.NombreDoctor</td>
+                                <td>@(string.IsNullOrEmpty(item.Especialidad) ? "-" : item.Especialidad)</td>
+                                <td>@(item.Empresa != null ? item.Empresa.NombreEmpresa : "-")</td>
+                                <td>@(item.Clinica != null ? item.Clinica.NombreClinica : "Todas")</td>
+                                <td>@(item.Activo ? Html.Raw("<span class='badge bg-success'>Activo</span>") : Html.Raw("<span class='badge bg-danger'>Inactivo</span>"))</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        @Html.ActionLink("Editar", "Edit", new { id = item.CodigoDoctor }, new { @class = "btn btn-warning" })
+                                        @Html.ActionLink("Eliminar", "Delete", new { id = item.CodigoDoctor }, new { @class = "btn btn-danger" })
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

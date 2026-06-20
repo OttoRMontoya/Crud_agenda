@@ -1,0 +1,42 @@
+@model List<Crud_agenda.Models.AgendaEmpresa>
+@{ ViewBag.Title = "Empresas"; }
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-building"></i> Catálogo de Empresas</h5>
+        @Html.ActionLink("Nueva Empresa", "Create", null, new { @class = "btn btn-light btn-sm" })
+    </div>
+    <div class="card-body">
+        @if (Model.Count == 0)
+        {
+            <div class="alert alert-info">No hay empresas registradas. <a href="@Url.Action("Create")">Crear una</a></div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr><th>ID</th><th>Empresa</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><span class="badge bg-primary">@item.IdEmpresa</span></td>
+                                <td>@item.NombreEmpresa</td>
+                                <td>@(item.Activo ? Html.Raw("<span class='badge bg-success'>Activo</span>") : Html.Raw("<span class='badge bg-danger'>Inactivo</span>"))</td>
+                                <td>@item.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        @Html.ActionLink("Editar", "Edit", new { id = item.IdEmpresa }, new { @class = "btn btn-warning" })
+                                        @Html.ActionLink("Eliminar", "Delete", new { id = item.IdEmpresa }, new { @class = "btn btn-danger" })
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

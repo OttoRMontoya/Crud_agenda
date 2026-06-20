@@ -1,0 +1,124 @@
+@model Crud_agenda.Models.AgendaEstatus
+
+@{
+    ViewBag.Title = "Editar Estado";
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square"></i> Editar Estado
+                </h5>
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm("Edit", "AgendaEstatus", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Por favor revise los errores:</strong>
+                            <ul class="mb-0">
+                                @foreach (var modelState in ViewData.ModelState.Values)
+                                {
+                                    foreach (var error in modelState.Errors)
+                                    {
+                                        <li>@error.ErrorMessage</li>
+                                    }
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @Html.HiddenFor(model => model.IdEstatus)
+                    @Html.HiddenFor(model => model.FechaCreacion)
+
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>ID:</strong> @Model.IdEstatus | 
+                        <strong>Creado:</strong> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
+                        @if (Model.FechaModificacion.HasValue)
+                        {
+                            <br />
+                            <strong>Última modificación:</strong> @Model.FechaModificacion.Value.ToString("dd/MM/yyyy HH:mm")
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        @Html.LabelFor(model => model.NombreEstatus, new { @class = "form-label" })
+                        @Html.TextBoxFor(model => model.NombreEstatus, new { @class = "form-control", @placeholder = "Ej: Pendiente, Completado, Cancelado" })
+                        @Html.ValidationMessageFor(model => model.NombreEstatus, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="mb-3">
+                        @Html.LabelFor(model => model.Descripcion, new { @class = "form-label" })
+                        @Html.TextAreaFor(model => model.Descripcion, new { @class = "form-control", @rows = "4", @placeholder = "Descripción del estado..." })
+                        @Html.ValidationMessageFor(model => model.Descripcion, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        @Html.CheckBoxFor(model => model.Activo, new { @class = "form-check-input" })
+                        @Html.LabelFor(model => model.Activo, new { @class = "form-check-label" })
+                    </div>
+
+                    <div class="form-group">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check-circle"></i> Actualizar
+                            </button>
+                            @Html.ActionLink("Cancelar", "Index", new { }, new { @class = "btn btn-secondary" })
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-label {
+        color: #333;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control,
+    .form-check-input {
+        border-radius: 0.4rem;
+        border: 1px solid #ddd;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus,
+    .form-check-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-warning {
+        background: #ffc107;
+        border: none;
+        color: #333;
+    }
+
+    .btn-warning:hover {
+        background: #ffb700;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+    }
+
+    .gap-2 {
+        gap: 0.5rem;
+    }
+
+    .alert-info {
+        background-color: #e7f3ff;
+        border-color: #b3d9ff;
+        color: #004085;
+    }
+</style>

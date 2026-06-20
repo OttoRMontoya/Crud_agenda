@@ -1,0 +1,102 @@
+@model List<Crud_agenda.Models.AgendaEstatus>
+
+@{
+    ViewBag.Title = "Estados de Agenda";
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check"></i> Gestión de Estados
+        </h5>
+        @Html.ActionLink("Nuevo Estado", "Create", new { }, new { @class = "btn btn-light btn-sm" })
+    </div>
+    <div class="card-body">
+        @if (Model.Count == 0)
+        {
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i>
+                No hay estados registrados. <a href="@Url.Action("Create")">Crear uno nuevo</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre del Estado</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Fecha de Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">@item.IdEstatus</span>
+                                </td>
+                                <td>@item.NombreEstatus</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.Descripcion))
+                                    {
+                                        <span>@Html.DisplayFor(modelItem => item.Descripcion)</span>
+                                    }
+                                    else
+                                    {
+                                        <em class="text-muted">Sin descripción</em>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Activo)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Activo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> Inactivo
+                                        </span>
+                                    }
+                                </td>
+                                <td>@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        @Html.ActionLink("Ver", "Details", new { id = item.IdEstatus }, new { @class = "btn btn-info" })
+                                        @Html.ActionLink("Editar", "Edit", new { id = item.IdEstatus }, new { @class = "btn btn-warning" })
+                                        @Html.ActionLink("Eliminar", "Delete", new { id = item.IdEstatus }, new { @class = "btn btn-danger" })
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .table-responsive {
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .btn-group-sm .btn {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.8rem;
+        border-radius: 0.25rem;
+    }
+
+    .badge {
+        padding: 0.4rem 0.6rem;
+        font-weight: 500;
+        border-radius: 0.25rem;
+    }
+</style>

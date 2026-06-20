@@ -1,0 +1,126 @@
+@model Crud_agenda.Models.AgendaEstatus
+
+@{
+    ViewBag.Title = "Eliminar Estado";
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-trash"></i> Eliminar Estado
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>¡Atención!</strong> Esta acción no puede ser revertida. ¿Está seguro de que desea eliminar este estado?
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h6 class="text-muted mb-2">Nombre del Estado</h6>
+                        <p class="fs-5 fw-bold">@Model.NombreEstatus</p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h6 class="text-muted mb-2">Descripción</h6>
+                        @if (!string.IsNullOrEmpty(Model.Descripcion))
+                        {
+                            <p>@Model.Descripcion</p>
+                        }
+                        else
+                        {
+                            <p class="text-muted"><em>Sin descripción</em></p>
+                        }
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Fecha de Creación</h6>
+                        <p>@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm:ss")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Estado</h6>
+                        <p>
+                            @if (Model.Activo)
+                            {
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Activo
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> Inactivo
+                                </span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <hr />
+
+                @using (Html.BeginForm("Delete", "AgendaEstatus", new { id = Model.IdEstatus }, FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-check-circle"></i> Sí, Eliminar
+                        </button>
+                        @Html.ActionLink("Cancelar", "Index", new { }, new { @class = "btn btn-secondary" })
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-danger {
+        border: 2px solid #dc3545 !important;
+        border-radius: 0.5rem;
+    }
+
+    .bg-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    }
+
+    .text-muted {
+        color: #6c757d;
+    }
+
+    .fs-5 {
+        font-size: 1.25rem;
+    }
+
+    .fw-bold {
+        font-weight: 700;
+    }
+
+    .gap-2 {
+        gap: 0.5rem;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    }
+
+    .badge {
+        padding: 0.5rem 0.75rem;
+        font-weight: 500;
+        border-radius: 0.35rem;
+        font-size: 0.9rem;
+    }
+</style>
