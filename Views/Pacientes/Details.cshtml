@@ -1,5 +1,5 @@
 @model Crud_agenda.Models.Paciente
-@{ ViewBag.Title = "Detalle Paciente"; }
+@{ ViewBag.Title = "Detalle Cliente"; }
 
 <div class="row"><div class="col-lg-8 offset-lg-2">
 <div class="card">
@@ -13,7 +13,7 @@
     <div class="card-body">
         <dl class="row">
             <dt class="col-sm-4">Código interno</dt><dd class="col-sm-8">@Model.Codigo</dd>
-            <dt class="col-sm-4">Código paciente</dt><dd class="col-sm-8">@Model.CodigoPaciente.Trim()</dd>
+            <dt class="col-sm-4">Código Cliente</dt><dd class="col-sm-8">@Model.CodigoPaciente.Trim()</dd>
             <dt class="col-sm-4">Identificación</dt><dd class="col-sm-8">@(Model.NoIdentificacion?.Trim() ?? "-")</dd>
             <dt class="col-sm-4">Fecha nacimiento</dt><dd class="col-sm-8">@(Model.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "-")</dd>
             <dt class="col-sm-4">Teléfono</dt><dd class="col-sm-8">@(Model.Telefono?.Trim() ?? "-")</dd>

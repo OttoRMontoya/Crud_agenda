@@ -1,11 +1,11 @@
 @model Crud_agenda.Models.Paciente
-@{ ViewBag.Title = "Eliminar Paciente"; }
+@{ ViewBag.Title = "Eliminar Cliente"; }
 
 <div class="row"><div class="col-md-6 offset-md-3">
 <div class="card border-danger">
     <div class="card-header bg-danger text-white"><h5 class="mb-0">Confirmar eliminación</h5></div>
     <div class="card-body">
-        <p>¿Eliminar al paciente <strong>@Model.NombreCompleto</strong>?</p>
+        <p>¿Eliminar al cliente <strong>@Model.NombreCompleto</strong>?</p>
         @using (Html.BeginForm("Delete", "Pacientes", FormMethod.Post))
         {
             @Html.AntiForgeryToken()

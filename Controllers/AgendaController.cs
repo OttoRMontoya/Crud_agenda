@@ -149,7 +149,7 @@ namespace Crud_agenda.Controllers
             if (cita == null)
             {
                 Response.StatusCode = (int)HttpStatusCode.NotFound;
-                return Json(new { success = false, message = "Cita no encontrada." }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "Reservación no encontrada." }, JsonRequestBehavior.AllowGet);
             }
 
             return Json(new { success = true, data = MapToViewModel(cita) }, JsonRequestBehavior.AllowGet);
@@ -195,7 +195,7 @@ namespace Crud_agenda.Controllers
 
             if (model.Clinica <= 0)
             {
-                return Json(new { success = false, message = "Debe seleccionar una clínica." });
+                return Json(new { success = false, message = "Debe seleccionar una habitación." });
             }
 
             if (model.Fin <= model.Inicio)
@@ -210,7 +210,7 @@ namespace Crud_agenda.Controllers
                 cita = db.Agenda.Find(model.IdAgendaCita);
                 if (cita == null)
                 {
-                    return Json(new { success = false, message = "Cita no encontrada." });
+                    return Json(new { success = false, message = "Reservación no encontrada." });
                 }
 
                 ApplyViewModel(cita, model);
@@ -236,7 +236,7 @@ namespace Crud_agenda.Controllers
             return Json(new
             {
                 success = true,
-                message = model.IdAgendaCita > 0 ? "Cita actualizada correctamente." : "Cita creada correctamente.",
+                message = model.IdAgendaCita > 0 ? "Reservación actualizada correctamente." : "Reservación creada correctamente.",
                 data = MapToEventDto(cita)
             });
         }
@@ -247,13 +247,13 @@ namespace Crud_agenda.Controllers
             var cita = db.Agenda.Find(id);
             if (cita == null)
             {
-                return Json(new { success = false, message = "Cita no encontrada." });
+                return Json(new { success = false, message = "Reservación no encontrada." });
             }
 
             db.Agenda.Remove(cita);
             db.SaveChanges();
 
-            return Json(new { success = true, message = "Cita eliminada correctamente." });
+            return Json(new { success = true, message = "Reservación eliminada correctamente." });
         }
 
         [HttpPost]
@@ -262,7 +262,7 @@ namespace Crud_agenda.Controllers
             var cita = db.Agenda.Find(id);
             if (cita == null)
             {
-                return Json(new { success = false, message = "Cita no encontrada." });
+                return Json(new { success = false, message = "Reservación no encontrada." });
             }
 
             if (fin <= inicio)

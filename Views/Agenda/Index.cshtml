@@ -1,6 +1,6 @@
 @using Crud_agenda.Models
 @{
-    ViewBag.Title = "Calendario de Citas";
+    ViewBag.Title = "Sistema de Reservaciones";
     var estatusList = ViewBag.EstatusList as List<AgendaEstatus> ?? new List<AgendaEstatus>();
     var etiquetas = ViewBag.Etiquetas as List<EtiquetaOption> ?? AgendaEtiquetas.Opciones;
 }
@@ -10,12 +10,12 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
                 <h2 class="calendar-title mb-1">
-                    <i class="bi bi-calendar3"></i> Calendario de Citas
+                    <i class="bi bi-calendar3"></i> Sistema de Reservaciones
                 </h2>
-                <p class="text-muted mb-0">Vista diaria por clínica — seleccione un horario en la columna de la clínica deseada</p>
+                <p class="text-muted mb-0">Vista diaria por habitación — seleccione un horario en la columna de la habitación deseada</p>
             </div>
             <button type="button" class="btn btn-primary btn-lg" id="btnNuevaCita">
-                <i class="bi bi-plus-lg"></i> Nueva Cita
+                <i class="bi bi-plus-lg"></i> Nueva Reservación
             </button>
         </div>
     </div>
@@ -35,20 +35,20 @@
                 <div class="calendar-filters d-flex flex-wrap gap-3">
                     <div>
                         <label class="form-label mb-1" for="filtroClinica">
-                            <i class="bi bi-hospital"></i> Filtrar por clínica
+                            <i class="bi bi-hospital"></i> Filtrar por habitación
                         </label>
                         <select id="filtroClinica" class="form-select form-select-sm">
-                            <option value="">-- Todas las clínicas --</option>
+                            <option value="">-- Todas las habitaciones --</option>
                         </select>
                     </div>
-                    <div>
+                    @*<div>
                         <label class="form-label mb-1" for="filtroDoctor">
                             <i class="bi bi-person-badge"></i> Filtrar por doctor
                         </label>
                         <select id="filtroDoctor" class="form-select form-select-sm">
                             <option value="">-- Todos los doctores --</option>
                         </select>
-                    </div>
+                    </div>*@
                 </div>
             </div>
             <div id="calendar"></div>
@@ -56,13 +56,13 @@
     </div>
 </div>
 
-<!-- Modal Cita -->
+<!-- Modal Reservación -->
 <div class="modal fade" id="modalCita" tabindex="-1" aria-labelledby="modalCitaLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header modal-header-gradient">
                 <h5 class="modal-title" id="modalCitaLabel">
-                    <i class="bi bi-calendar-plus"></i> <span id="modalTitulo">Nueva Cita</span>
+                    <i class="bi bi-calendar-plus"></i> <span id="modalTitulo">Nueva Reservación</span>
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -73,13 +73,13 @@
 
                     <ul class="nav nav-tabs mb-3" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabCita" type="button">Cita</button>
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabCita" type="button">Reservación</button>
                         </li>
                         <li class="nav-item">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabContacto" type="button">Contacto</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMedico" type="button">Datos Médicos</button>
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMedico" type="button">Datos Extras</button>
                         </li>
                     </ul>
 
@@ -88,7 +88,7 @@
                             <div class="row g-3">
                                 <div class="col-md-8">
                                     <label class="form-label">Asunto <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="Asunto" name="Asunto" maxlength="50" required placeholder="Ej: Consulta general" />
+                                    <input type="text" class="form-control" id="Asunto" name="Asunto" maxlength="50" required placeholder="Ej: Reservación general" />
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Etiqueta</label>
@@ -115,7 +115,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Lugar</label>
-                                    <input type="text" class="form-control" id="Lugar" name="Lugar" maxlength="50" placeholder="Consultorio, sala, etc." />
+                                    <input type="text" class="form-control" id="Lugar" name="Lugar" maxlength="50" placeholder="Habitación, sala, etc." />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Estatus</label>
@@ -135,7 +135,7 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Descripción</label>
-                                    <textarea class="form-control" id="Descripcion" name="Descripcion" rows="3" maxlength="250" placeholder="Notas adicionales de la cita..."></textarea>
+                                    <textarea class="form-control" id="Descripcion" name="Descripcion" rows="3" maxlength="250" placeholder="Notas adicionales de la Reservación..."></textarea>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-check">
@@ -151,7 +151,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label" for="buscarPaciente">
-                                    <i class="bi bi-search"></i> Buscar paciente
+                                    <i class="bi bi-search"></i> Buscar cliente para asociar a la reservación
                                 </label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="buscarPaciente" placeholder="Nombre, código, identificación, teléfono o correo..." />
@@ -164,34 +164,34 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Cód.</th>
-                                            <th>Paciente</th>
+                                            <th>Cliente</th>
                                             <th>Identificación</th>
                                             <th>Teléfono</th>
                                             <th></th>
                                         </tr>
                                     </thead>
                                     <tbody id="listaPacientes">
-                                        <tr><td colspan="5" class="text-muted text-center py-3">Escriba y busque un paciente</td></tr>
+                                        <tr><td colspan="5" class="text-muted text-center py-3">Escriba y busque un cliente</td></tr>
                                     </tbody>
                                 </table>
                             </div>
 
                             <div id="pacienteSeleccionado" class="alert alert-success d-none py-2 mb-3">
                                 <i class="bi bi-person-check"></i>
-                                Paciente seleccionado: <strong id="pacienteSeleccionadoNombre"></strong>
+                                Cliente seleccionado: <strong id="pacienteSeleccionadoNombre"></strong>
                                 <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="btnQuitarPaciente">Quitar</button>
                             </div>
 
                             <hr class="my-3" />
-                            <p class="text-muted small mb-2">Datos de contacto (se llenan al seleccionar paciente)</p>
+                            <p class="text-muted small mb-2">Datos de contacto (se llenan al seleccionar cliente)</p>
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Contacto / Paciente <span class="text-danger">*</span></label>
+                                    <label class="form-label">Contacto / Cliente <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="Contacto" name="Contacto" maxlength="100" required readonly />
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Cód. Paciente</label>
+                                    <label class="form-label">Cód. Cliente</label>
                                     <input type="text" class="form-control" id="CodigoPacienteDisplay" readonly />
                                 </div>
                                 <div class="col-md-3">
@@ -226,9 +226,9 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Clínica <span class="text-danger">*</span></label>
+                                    <label class="form-label">Habitación <span class="text-danger">*</span></label>
                                     <select class="form-select" id="Clinica" name="Clinica" required>
-                                        <option value="">-- Seleccione clínica --</option>
+                                        <option value="">-- Seleccione habitación --</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
@@ -238,8 +238,8 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Id Calendario</label>
-                                    <input type="number" class="form-control" id="IdCalendario" name="IdCalendario" value="1" min="0" />
+                                   @* <label class="form-label">Id Calendario</label>*@
+                                    <input type="hidden" class="form-control" id="IdCalendario" name="IdCalendario" value="1" min="0" />
                                 </div>
                             </div>
                         </div>
@@ -278,9 +278,9 @@
             min-width: 200px;
         }
 
-        .calendar-filters .form-select {
-            min-width: 220px;
-        }
+            .calendar-filters .form-select {
+                min-width: 220px;
+            }
 
         .etiquetas-leyenda {
             display: flex;
@@ -318,18 +318,18 @@
             --fc-event-border-color: transparent;
         }
 
-        .fc .fc-toolbar-title {
-            font-size: 1.35rem;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
+            .fc .fc-toolbar-title {
+                font-size: 1.35rem;
+                font-weight: 600;
+                text-transform: capitalize;
+            }
 
-        .fc .fc-event {
-            cursor: pointer;
-            border-radius: 4px;
-            padding: 1px 2px;
-            font-size: 0.8rem;
-        }
+            .fc .fc-event {
+                cursor: pointer;
+                border-radius: 4px;
+                padding: 1px 2px;
+                font-size: 0.8rem;
+            }
 
         /* Encabezados de clínica estilo referencia */
         .fc-col-header-cell {
@@ -395,16 +395,16 @@
             border-radius: 0.4rem;
         }
 
-        .patient-list-wrap .btn-select-paciente {
-            font-size: 0.75rem;
-            padding: 0.2rem 0.5rem;
-        }
+            .patient-list-wrap .btn-select-paciente {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.5rem;
+            }
     </style>
 }
 
 @section scripts {
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.20/index.global.min.js"></script>
-   @* <script src="https://cdn.jsdelivr.net/npm/@@fullcalendar/core@6.1.20/locales/es.global.min.js"></script>*@
+    @* <script src="https://cdn.jsdelivr.net/npm/@@fullcalendar/core@6.1.20/locales/es.global.min.js"></script>*@
     <script>
         (function () {
             const urls = {
@@ -425,7 +425,7 @@
             const selEmpresa = document.getElementById('Empresa');
             const selClinica = document.getElementById('Clinica');
             const selDoctor = document.getElementById('CodigoDoctor');
-            const filtroDoctor = document.getElementById('filtroDoctor');
+            //const filtroDoctor = document.getElementById('filtroDoctor');
             const filtroClinica = document.getElementById('filtroClinica');
 
             const etiquetaColors = {
@@ -477,7 +477,7 @@
             }
 
             function formatResourceDate(date) {
-                return date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+                return date.toLocaleDateString('es-GT', { weekday: 'long', day: 'numeric', month: 'long' });
             }
 
             function showAlert(message, isError) {
@@ -521,11 +521,11 @@
 
             function loadClinicas(empresaId, selectedId) {
                 if (!empresaId) {
-                    fillSelect(selClinica, [], null, '-- Seleccione clínica --', function (x) { return prop(x, 'nombre'); });
+                    fillSelect(selClinica, [], null, '-- Seleccione Habitación --', function (x) { return prop(x, 'nombre'); });
                     return $.Deferred().resolve().promise();
                 }
                 return $.getJSON(urls.clinicas, { empresaId: empresaId }).then(function (data) {
-                    fillSelect(selClinica, data, selectedId, '-- Seleccione clínica --', function (x) { return prop(x, 'nombre'); }, true);
+                    fillSelect(selClinica, data, selectedId, '-- Seleccione Habitación --', function (x) { return prop(x, 'nombre'); }, true);
                 });
             }
 
@@ -545,19 +545,19 @@
                 });
             }
 
-            function loadDoctoresFiltro() {
-                return $.getJSON(urls.doctoresFiltro).then(function (data) {
-                    fillSelect(filtroDoctor, data, null, '-- Todos los doctores --', function (x) {
-                        const nombre = prop(x, 'nombre');
-                        const esp = prop(x, 'especialidad');
-                        return esp ? nombre + ' - ' + esp : nombre;
-                    });
-                });
-            }
+            //function loadDoctoresFiltro() {
+            //    return $.getJSON(urls.doctoresFiltro).then(function (data) {
+            //        fillSelect(filtroDoctor, data, null, '-- Todos los doctores --', function (x) {
+            //            const nombre = prop(x, 'nombre');
+            //            const esp = prop(x, 'especialidad');
+            //            return esp ? nombre + ' - ' + esp : nombre;
+            //        });
+            //    });
+            //}
 
             function loadClinicasFiltro() {
                 return $.getJSON(urls.clinicasFiltro).then(function (data) {
-                    fillSelect(filtroClinica, data, null, '-- Todas las clínicas --', function (x) { return prop(x, 'nombre'); });
+                    fillSelect(filtroClinica, data, null, '-- Todas las Habitaciones --', function (x) { return prop(x, 'nombre'); });
                 });
             }
 
@@ -680,7 +680,7 @@
                 document.getElementById('listaPacientes').innerHTML = '<tr><td colspan="5" class="text-muted text-center py-3">Escriba y busque un paciente</td></tr>';
                 hideAlert();
                 btnEliminar.classList.add('d-none');
-                modalTitulo.textContent = 'Nueva Cita';
+                modalTitulo.textContent = 'Nueva Reservación';
                 new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
                 loadEmpresas();
                 loadClinicas(null);
@@ -771,7 +771,7 @@
                 document.getElementById('listaPacientes').innerHTML = '<tr><td colspan="5" class="text-muted text-center py-3">Escriba y busque un paciente</td></tr>';
                 hideAlert();
                 btnEliminar.classList.add('d-none');
-                modalTitulo.textContent = 'Nueva Cita';
+                modalTitulo.textContent = 'Nueva Reservación';
                 new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
 
                 const startDate = start ? new Date(start) : new Date();
@@ -801,16 +801,16 @@
                 hideAlert();
                 new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
                 fillForm(props, fcStart, fcEnd, fcAllDay).then(function () {
-                    modalTitulo.textContent = 'Editar Cita';
+                    modalTitulo.textContent = 'Editar Reservación';
                     btnEliminar.classList.remove('d-none');
                     modal.show();
                 });
             }
 
-            function getSelectedDoctorFilter() {
-                const val = filtroDoctor.value;
-                return val ? parseInt(val) : '';
-            }
+            //function getSelectedDoctorFilter() {
+            //    const val = filtroDoctor.value;
+            //    return val ? parseInt(val) : '';
+            //}
 
             function getSelectedClinicaFilter() {
                 const val = filtroClinica.value;
@@ -859,9 +859,9 @@
                 loadDoctores(selEmpresa.value || empresaFromClinica, clinicaId);
             });
 
-            filtroDoctor.addEventListener('change', function () {
-                calendar.refetchEvents();
-            });
+            //filtroDoctor.addEventListener('change', function () {
+            //    calendar.refetchEvents();
+            //});
 
             filtroClinica.addEventListener('change', function () {
                 refetchCalendar();
@@ -902,7 +902,7 @@
 
             btnEliminar.addEventListener('click', function () {
                 const id = parseInt(document.getElementById('IdAgendaCita').value);
-                if (!id || !confirm('¿Está seguro de eliminar esta cita?')) return;
+                if (!id || !confirm('¿Está seguro de eliminar esta Reservación?')) return;
 
                 $.post(urls.delete, { id: id }, function (result) {
                     if (result.success) {
@@ -934,18 +934,31 @@
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'resourceTimeGridDay,dayGridMonth,listWeek'
+                    right: 'resourceTimeGridDay,timeGridWeek,dayGridMonth,listWeek'
                 },
                 buttonText: {
                     today: 'Hoy',
-                    month: 'Mes',
-                    day: 'Día',
-                    list: 'Lista'
+                    resourceTimeGridDay: 'Día',
+                    timeGridWeek: 'Semana',
+                    dayGridMonth: 'Mes',
+                    listWeek: 'Lista'
                 },
-                slotMinTime: '06:00:00',
-                slotMaxTime: '22:00:00',
-                slotDuration: '00:30:00',
-                allDaySlot: false,
+                views: {
+                    resourceTimeGridDay: {
+                        type: 'resourceTimeGrid',
+                        duration: { days: 1 },
+                        slotMinTime: '06:00:00',
+                        slotMaxTime: '22:00:00',
+                        slotDuration: '00:30:00',
+                        allDaySlot: false
+                    },
+                    timeGridWeek: {
+                        slotMinTime: '06:00:00',
+                        slotMaxTime: '22:00:00',
+                        slotDuration: '00:30:00',
+                        allDaySlot: false
+                    }
+                },
                 editable: true,
                 selectable: true,
                 selectMirror: true,
@@ -980,7 +993,7 @@
                         data: {
                             start: info.startStr,
                             end: info.endStr,
-                            codigoDoctor: getSelectedDoctorFilter(),
+                           // codigoDoctor: getSelectedDoctorFilter(),
                             clinica: filtroClinica.value || ''
                         },
                         success: function (data) {
@@ -992,7 +1005,9 @@
                     });
                 },
                 select: function (info) {
-                    const clinicaId = info.resource ? info.resource.id : null;
+                    const clinicaId = info.resource
+                        ? info.resource.id
+                        : (filtroClinica.value || null);
                     openNewCita(info.start, info.end, info.allDay, clinicaId);
                     calendar.unselect();
                 },
@@ -1024,7 +1039,7 @@
 
             calendar.render();
             loadClinicasFiltro();
-            loadDoctoresFiltro();
+            //loadDoctoresFiltro();
             modalEl.addEventListener('hidden.bs.modal', resetForm);
         })();
     </script>

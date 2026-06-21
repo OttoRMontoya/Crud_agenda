@@ -52,7 +52,7 @@ namespace Crud_agenda.Controllers
                 NormalizarCampos(item);
                 db.Pacientes.Add(item);
                 db.SaveChanges();
-                TempData["Message"] = "Paciente creado exitosamente.";
+                TempData["Message"] = "Cliente creado exitosamente.";
                 return RedirectToAction("Index");
             }
             return View(item);
@@ -99,7 +99,7 @@ namespace Crud_agenda.Controllers
                     NormalizarCampos(existing);
                     db.Entry(existing).State = EntityState.Modified;
                     db.SaveChanges();
-                    TempData["Message"] = "Paciente actualizado exitosamente.";
+                    TempData["Message"] = "Cliente actualizado exitosamente.";
                     return RedirectToAction("Index");
                 }
             }
@@ -123,7 +123,7 @@ namespace Crud_agenda.Controllers
             {
                 db.Pacientes.Remove(item);
                 db.SaveChanges();
-                TempData["Message"] = "Paciente eliminado exitosamente.";
+                TempData["Message"] = "Cliente eliminado exitosamente.";
             }
             return RedirectToAction("Index");
         }

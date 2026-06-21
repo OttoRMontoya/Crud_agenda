@@ -43,7 +43,7 @@ namespace Crud_agenda.Controllers
                 item.Activo = true;
                 db.AgendaClinica.Add(item);
                 db.SaveChanges();
-                TempData["Message"] = "Clínica creada exitosamente.";
+                TempData["Message"] = "Habitación creada exitosamente.";
                 return RedirectToAction("Index");
             }
             LoadEmpresas(item.IdEmpresa);
@@ -75,7 +75,7 @@ namespace Crud_agenda.Controllers
                     existing.FechaModificacion = DateTime.Now;
                     db.Entry(existing).State = EntityState.Modified;
                     db.SaveChanges();
-                    TempData["Message"] = "Clínica actualizada exitosamente.";
+                    TempData["Message"] = "Habitación actualizada exitosamente.";
                     return RedirectToAction("Index");
                 }
             }
@@ -100,7 +100,7 @@ namespace Crud_agenda.Controllers
             {
                 db.AgendaClinica.Remove(item);
                 db.SaveChanges();
-                TempData["Message"] = "Clínica eliminada exitosamente.";
+                TempData["Message"] = "Habitación eliminada exitosamente.";
             }
             return RedirectToAction("Index");
         }
