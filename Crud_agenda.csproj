@@ -220,7 +220,6 @@
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
-    <Content Include="INICIO.txt" />
     <Content Include="bs-calendar\dist\bs-calendar.js" />
     <Content Include="bs-calendar\dist\bs-calendar.min.js" />
     <Content Include="Scripts\bootstrap.bundle.js" />
@@ -229,7 +228,6 @@
     <Content Include="Scripts\bootstrap.esm.min.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
-    <Content Include="INDEX.md" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\CreateAgendaTable.sql" />
     <Content Include="Scripts\CreateCatalogosTables.sql" />
