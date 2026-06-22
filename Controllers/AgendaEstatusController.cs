@@ -37,16 +37,18 @@ namespace Crud_agenda.Controllers
         // GET: AgendaEstatus/Create
         public ActionResult Create()
         {
-            return View();
+            return View(new AgendaEstatus { Color = "#667eea", Activo = true });
         }
 
         // POST: AgendaEstatus/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "NombreEstatus,Descripcion,Activo")] AgendaEstatus agendaEstatus)
+        public ActionResult Create([Bind(Include = "NombreEstatus,Descripcion,Color,Activo")] AgendaEstatus agendaEstatus)
         {
             if (ModelState.IsValid)
             {
+                if (string.IsNullOrWhiteSpace(agendaEstatus.Color))
+                    agendaEstatus.Color = "#667eea";
                 agendaEstatus.FechaCreacion = DateTime.Now;
                 agendaEstatus.Activo = true;
                 db.AgendaEstatus.Add(agendaEstatus);
@@ -75,7 +77,7 @@ namespace Crud_agenda.Controllers
         // POST: AgendaEstatus/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "IdEstatus,NombreEstatus,Descripcion,Activo")] AgendaEstatus agendaEstatus)
+        public ActionResult Edit([Bind(Include = "IdEstatus,NombreEstatus,Descripcion,Color,Activo")] AgendaEstatus agendaEstatus)
         {
             if (ModelState.IsValid)
             {
@@ -84,6 +86,7 @@ namespace Crud_agenda.Controllers
                 {
                     existingEstatus.NombreEstatus = agendaEstatus.NombreEstatus;
                     existingEstatus.Descripcion = agendaEstatus.Descripcion;
+                    existingEstatus.Color = string.IsNullOrWhiteSpace(agendaEstatus.Color) ? "#667eea" : agendaEstatus.Color;
                     existingEstatus.Activo = agendaEstatus.Activo;
                     existingEstatus.FechaModificacion = DateTime.Now;
 

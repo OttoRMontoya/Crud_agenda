@@ -43,8 +43,17 @@
 
                     <div class="mb-3">
                         @Html.LabelFor(model => model.Descripcion, new { @class = "form-label" })
-                        @Html.TextAreaFor(model => model.Descripcion, new { @class = "form-control", @rows = "4", @placeholder = "Descripción del estado..." })
+                        @Html.TextAreaFor(model => model.Descripcion, new { @class = "form-control", @rows = "4", @placeholder = "Descripcin del estado..." })
                         @Html.ValidationMessageFor(model => model.Descripcion, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="mb-3">
+                        @Html.LabelFor(model => model.Color, new { @class = "form-label" })
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            @Html.TextBoxFor(model => model.Color, new { @class = "form-control form-control-color", type = "color", style = "width: 4rem; height: 2.5rem;" })
+                            <span class="text-muted small">Color de las citas con este estado en el calendario</span>
+                        </div>
+                        @Html.ValidationMessageFor(model => model.Color, "", new { @class = "text-danger small" })
                     </div>
 
                     <div class="mb-3 form-check">

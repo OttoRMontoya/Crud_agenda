@@ -10,23 +10,24 @@ BEGIN
         [IdEstatus] INT PRIMARY KEY IDENTITY(1,1),
         [NombreEstatus] NVARCHAR(100) NOT NULL,
         [Descripcion] NVARCHAR(500) NULL,
+        [Color] NVARCHAR(7) NOT NULL DEFAULT '#667eea',
         [Activo] BIT NOT NULL DEFAULT 1,
         [FechaCreacion] DATETIME NOT NULL DEFAULT GETDATE(),
         [FechaModificacion] DATETIME NULL
     )
 
-    -- Crear índice para mejorar búsquedas
+    -- Crear ï¿½ndice para mejorar bï¿½squedas
     CREATE INDEX IX_Agenda_Estatus_Activo ON [dbo].[Agenda_Estatus]([Activo])
     CREATE INDEX IX_Agenda_Estatus_NombreEstatus ON [dbo].[Agenda_Estatus]([NombreEstatus])
 
-    -- Insertar algunos datos de ejemplo (SIN especificar IdEstatus, se genera automáticamente)
+    -- Insertar algunos datos de ejemplo (SIN especificar IdEstatus, se genera automï¿½ticamente)
     INSERT INTO [dbo].[Agenda_Estatus] ([NombreEstatus], [Descripcion], [Activo]) 
     VALUES
-    (N'Pendiente', N'Estado inicial, esperando atención', 1),
-    (N'En Proceso', N'Se está trabajando en la tarea', 1),
+    (N'Pendiente', N'Estado inicial, esperando atencion', 1),
+    (N'En Proceso', N'Se estï¿½ trabajando en la tarea', 1),
     (N'Completado', N'Tarea finalizada exitosamente', 1),
     (N'Cancelado', N'La tarea fue cancelada', 1),
-    (N'En Espera', N'Esperando información o recursos adicionales', 1)
+    (N'En Espera', N'Esperando informacion o recursos adicionales', 1)
 
     PRINT 'Tabla Agenda_Estatus creada exitosamente con datos de ejemplo.'
 END
@@ -39,10 +40,10 @@ BEGIN
     -- DBCC CHECKIDENT ('[dbo].[Agenda_Estatus]', RESEED, 0)
     -- INSERT INTO [dbo].[Agenda_Estatus] ([NombreEstatus], [Descripcion], [Activo]) 
     -- VALUES
-    -- (N'Pendiente', N'Estado inicial, esperando atención', 1),
-    -- (N'En Proceso', N'Se está trabajando en la tarea', 1),
+    -- (N'Pendiente', N'Estado inicial, esperando atenciï¿½n', 1),
+    -- (N'En Proceso', N'Se estï¿½ trabajando en la tarea', 1),
     -- (N'Completado', N'Tarea finalizada exitosamente', 1),
     -- (N'Cancelado', N'La tarea fue cancelada', 1),
-    -- (N'En Espera', N'Esperando información o recursos adicionales', 1)
+    -- (N'En Espera', N'Esperando informaciï¿½n o recursos adicionales', 1)
 END
 GO

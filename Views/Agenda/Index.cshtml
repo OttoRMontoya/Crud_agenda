@@ -12,7 +12,7 @@
                 <h2 class="calendar-title mb-1">
                     <i class="bi bi-calendar3"></i> Sistema de Reservaciones
                 </h2>
-                <p class="text-muted mb-0">Vista diaria por habitación — seleccione un horario en la columna de la habitación deseada</p>
+                <p class="text-muted mb-0">Vista diaria por habitación — arrastre en la grilla para marcar inicio y fin, o arrastre citas entre columnas</p>
             </div>
             <button type="button" class="btn btn-primary btn-lg" id="btnNuevaCita">
                 <i class="bi bi-plus-lg"></i> Nueva Reservación
@@ -24,22 +24,38 @@
         <div class="card-body p-3">
             <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
                 <div class="etiquetas-leyenda">
-                    @foreach (var et in etiquetas)
+                    @foreach (var est in estatusList)
                     {
+                        var estColor = string.IsNullOrWhiteSpace(est.Color) ? "#667eea" : est.Color;
                         <span class="leyenda-item">
-                            <span class="leyenda-color" style="background-color: @et.Color;"></span>
-                            @et.Nombre
+                            <span class="leyenda-color" style="background-color: @estColor;"></span>
+                            @est.NombreEstatus
                         </span>
                     }
                 </div>
                 <div class="calendar-filters d-flex flex-wrap gap-3">
-                    <div>
-                        <label class="form-label mb-1" for="filtroClinica">
+                    <div class="filtro-clinicas-dropdown">
+                        <label class="form-label mb-1" for="filtroClinicaToggle">
                             <i class="bi bi-hospital"></i> Filtrar por habitación
                         </label>
-                        <select id="filtroClinica" class="form-select form-select-sm">
-                            <option value="">-- Todas las habitaciones --</option>
-                        </select>
+                        <div class="dropdown">
+                            <button class="btn dropdown-toggle filtro-clinicas-toggle w-100 text-start"
+                                    type="button" id="filtroClinicaToggle"
+                                    data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                    aria-expanded="false">
+                                <span id="filtroClinicaLabel" class="text-truncate">Cargando...</span>
+                            </button>
+                            <div class="dropdown-menu filtro-clinicas-menu w-100 p-0" id="filtroClinicaMenu">
+                                <div class="filtro-clinicas-actions px-3 py-2 border-bottom bg-light">
+                                    <button type="button" class="btn btn-link btn-sm p-0" id="filtroClinicaTodas">Todas</button>
+                                    <span class="text-muted mx-1">|</span>
+                                    <button type="button" class="btn btn-link btn-sm p-0" id="filtroClinicaNinguna">Ninguna</button>
+                                </div>
+                                <div id="filtroClinicaList" class="filtro-clinicas-checkboxes p-2">
+                                    <span class="text-muted small">Cargando habitaciones...</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     @*<div>
                         <label class="form-label mb-1" for="filtroDoctor">
@@ -51,7 +67,36 @@
                     </div>*@
                 </div>
             </div>
-            <div id="calendar"></div>
+            <div class="calendar-view-switcher btn-group mb-3" role="group" aria-label="Vista del calendario">
+                <button type="button" class="btn btn-outline-primary active" data-calendar-view="rooms-day">
+                    <i class="bi bi-calendar-day"></i> Día
+                </button>
+                <button type="button" class="btn btn-outline-primary" data-calendar-view="week">
+                    <i class="bi bi-kanban"></i> Semana
+                </button>
+                <button type="button" class="btn btn-outline-primary" data-calendar-view="month">
+                    <i class="bi bi-calendar-month"></i> Mes
+                </button>
+                <button type="button" class="btn btn-outline-primary" data-calendar-view="agenda">
+                    <i class="bi bi-list-ul"></i> Agenda
+                </button>
+            </div>
+            <div id="roomsDayView">
+                <div class="rooms-day-toolbar d-flex flex-wrap align-items-center gap-3 mb-2">
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-primary" id="roomsDayPrev" title="Día anterior">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-primary" id="roomsDayToday">Hoy</button>
+                        <button type="button" class="btn btn-primary" id="roomsDayNext" title="Día siguiente">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    <h5 class="rooms-day-title mb-0 flex-grow-1 text-center text-md-start" id="roomsDayTitle"></h5>
+                </div>
+                <div id="roomsDayGrid" class="rooms-day-scroll"></div>
+            </div>
+            <div id="calendar" class="d-none"></div>
         </div>
     </div>
 </div>
@@ -262,7 +307,6 @@
 </div>
 
 @section styles {
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.20/index.global.min.css" rel="stylesheet" />
     <style>
         .calendar-page .calendar-title {
             font-weight: 700;
@@ -278,9 +322,66 @@
             min-width: 200px;
         }
 
-            .calendar-filters .form-select {
-                min-width: 220px;
+        .filtro-clinicas-dropdown {
+            min-width: 260px;
+        }
+
+        .filtro-clinicas-toggle {
+            position: relative;
+            font-size: 0.875rem;
+            padding: 0.25rem 2rem 0.25rem 0.5rem;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            color: #212529;
+            min-height: calc(1.5em + 0.5rem + 2px);
+        }
+
+            .filtro-clinicas-toggle:hover,
+            .filtro-clinicas-toggle:focus,
+            .filtro-clinicas-toggle.show {
+                background-color: #fff;
+                border-color: #86b7fe;
+                color: #212529;
+                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
             }
+
+            .filtro-clinicas-toggle::after {
+                position: absolute;
+                right: 0.75rem;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+
+        .filtro-clinicas-dropdown .dropdown {
+            position: relative;
+        }
+
+        .filtro-clinicas-menu {
+            max-height: 260px;
+            overflow: hidden;
+        }
+
+        .filtro-clinicas-checkboxes {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+            .filtro-clinicas-checkboxes .form-check {
+                margin-bottom: 0.35rem;
+                padding-left: 1.75rem;
+            }
+
+            .filtro-clinicas-checkboxes .form-check-label {
+                font-size: 0.875rem;
+                cursor: pointer;
+                width: 100%;
+            }
+
+        .filtro-clinicas-actions .btn-link {
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
 
         .etiquetas-leyenda {
             display: flex;
@@ -307,38 +408,69 @@
             min-height: 700px;
         }
 
-        .fc {
-            --fc-button-bg-color: #667eea;
-            --fc-button-border-color: #667eea;
-            --fc-button-hover-bg-color: #764ba2;
-            --fc-button-hover-border-color: #764ba2;
-            --fc-button-active-bg-color: #5a67d8;
-            --fc-button-active-border-color: #5a67d8;
-            --fc-today-bg-color: rgba(102, 126, 234, 0.06);
-            --fc-event-border-color: transparent;
+        .calendar-view-switcher .btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: #fff;
         }
 
-            .fc .fc-toolbar-title {
-                font-size: 1.35rem;
-                font-weight: 600;
-                text-transform: capitalize;
-            }
-
-            .fc .fc-event {
-                cursor: pointer;
-                border-radius: 4px;
-                padding: 1px 2px;
-                font-size: 0.8rem;
-            }
-
-        /* Encabezados de clínica estilo referencia */
-        .fc-col-header-cell {
-            vertical-align: top;
+        .rooms-day-scroll {
+            overflow: auto;
+            max-height: calc(100vh - 280px);
+            min-height: 700px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            background: #fff;
         }
 
-        .fc-resource-header {
-            text-align: center;
-            padding: 0 !important;
+        .rooms-day-grid {
+            display: flex;
+            min-width: min-content;
+        }
+
+        .rooms-day-time-col {
+            flex: 0 0 56px;
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            background: #fff;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .rooms-day-time-header {
+            height: 72px;
+            border-bottom: 1px solid #dee2e6;
+            background: #f8f9fa;
+        }
+
+        .rooms-day-time-label {
+            height: 30px;
+            font-size: 0.72rem;
+            color: #666;
+            text-align: right;
+            padding: 0 6px 0 0;
+            line-height: 30px;
+            border-bottom: 1px solid #f0f0f0;
+            box-sizing: border-box;
+        }
+
+        .rooms-day-columns {
+            display: flex;
+            flex: 1;
+        }
+
+        .rooms-day-column {
+            flex: 1 0 180px;
+            min-width: 180px;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .rooms-day-column:nth-child(even) .rooms-day-col-body {
+            background-color: #e8f4fc;
+        }
+
+        .rooms-day-column:nth-child(odd) .rooms-day-col-body {
+            background-color: #f0ebf8;
         }
 
         .resource-clinic-name {
@@ -349,6 +481,7 @@
             letter-spacing: 0.5px;
             padding: 8px 4px;
             text-transform: uppercase;
+            text-align: center;
             border-bottom: 1px solid #dee2e6;
         }
 
@@ -358,19 +491,99 @@
             font-size: 0.78rem;
             padding: 6px 4px;
             text-transform: capitalize;
+            text-align: center;
         }
 
-        /* Colores alternados por columna de clínica */
-        .fc-timegrid-col.resource-col-even {
-            background-color: #e8f4fc;
+        .rooms-day-col-body {
+            position: relative;
+            user-select: none;
+            cursor: crosshair;
         }
 
-        .fc-timegrid-col.resource-col-odd {
-            background-color: #f0ebf8;
+        .rooms-day-slot {
+            height: 30px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            pointer-events: none;
         }
 
-        .fc .fc-timegrid-slot-label {
+        .rooms-day-select-preview {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            background: rgba(102, 126, 234, 0.35);
+            border: 1px solid #667eea;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .rooms-day-appt {
+            position: absolute;
+            border-radius: 4px;
+            padding: 2px 4px;
             font-size: 0.75rem;
+            color: #fff;
+            overflow: hidden;
+            cursor: grab;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            z-index: 2;
+            line-height: 1.2;
+        }
+
+            .rooms-day-appt.dragging {
+                opacity: 0.85;
+                cursor: grabbing;
+                z-index: 10;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            }
+
+            .rooms-day-appt.resizing {
+                opacity: 0.9;
+                z-index: 10;
+            }
+
+        .rooms-day-appt-text {
+            display: block;
+            pointer-events: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .rooms-day-appt-resize {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 8px;
+            cursor: ns-resize;
+            z-index: 3;
+        }
+
+        .rooms-day-empty {
+            padding: 3rem 1rem;
+            text-align: center;
+            color: #888;
+        }
+
+        body.rooms-day-dragging {
+            cursor: grabbing;
+            user-select: none;
+        }
+
+            body.rooms-day-dragging .rooms-day-col-body {
+                cursor: crosshair;
+            }
+
+        #calendar .bs-calendar {
+            --bs-primary: #667eea;
+            --bs-primary-rgb: 102, 126, 234;
+        }
+
+        #calendar [data-appointment] {
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.8rem;
         }
 
         .modal-header-gradient {
@@ -403,8 +616,7 @@
 }
 
 @section scripts {
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.20/index.global.min.js"></script>
-    @* <script src="https://cdn.jsdelivr.net/npm/@@fullcalendar/core@6.1.20/locales/es.global.min.js"></script>*@
+    <script src="@Url.Content("~/bs-calendar/dist/bs-calendar.min.js")"></script>
     <script>
         (function () {
             const urls = {
@@ -426,12 +638,15 @@
             const selClinica = document.getElementById('Clinica');
             const selDoctor = document.getElementById('CodigoDoctor');
             //const filtroDoctor = document.getElementById('filtroDoctor');
-            const filtroClinica = document.getElementById('filtroClinica');
+            const filtroClinicaList = document.getElementById('filtroClinicaList');
+            const filtroClinicaLabel = document.getElementById('filtroClinicaLabel');
+            let filtroClinicaItems = [];
 
-            const etiquetaColors = {
-                @foreach (var et in etiquetas)
+            const estatusColors = {
+                @foreach (var est in estatusList)
                 {
-                    @:@et.Id: '@et.Color',
+                    var estColor = string.IsNullOrWhiteSpace(est.Color) ? "#667eea" : est.Color;
+                    @:@est.IdEstatus: '@estColor',
                 }
             };
 
@@ -441,8 +656,22 @@
             const modalAlert = document.getElementById('modalAlert');
             const btnEliminar = document.getElementById('btnEliminarCita');
             const modalTitulo = document.getElementById('modalTitulo');
-            let calendar;
+            const $calendar = $('#calendar');
             let calendarResources = [];
+
+            const ROOMS_HOUR_START = 6;
+            const ROOMS_HOUR_END = 22;
+            const ROOMS_SLOT_MINUTES = 30;
+            const ROOMS_PX_PER_MINUTE = 1;
+            let currentCalendarView = 'rooms-day';
+            const roomsDayState = {
+                currentDate: new Date(),
+                appointments: []
+            };
+            let bsCalendarReady = false;
+            let lastSavedCitaMeta = null;
+            let roomsInteraction = null;
+            let suppressRoomsClickUntil = 0;
 
             function pad(n) { return n < 10 ? '0' + n : n; }
 
@@ -478,6 +707,757 @@
 
             function formatResourceDate(date) {
                 return date.toLocaleDateString('es-GT', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+
+            function formatDateOnly(date) {
+                return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+            }
+
+            function getSelectedClinicaFilters() {
+                if (!filtroClinicaList) return [];
+                return Array.from(filtroClinicaList.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(function (cb) { return cb.value; });
+            }
+
+            function updateFiltroClinicaLabel() {
+                if (!filtroClinicaLabel) return;
+                const selected = getSelectedClinicaFilters();
+                const total = filtroClinicaItems.length;
+                if (!total) {
+                    filtroClinicaLabel.textContent = 'Sin habitaciones';
+                    return;
+                }
+                if (!selected.length) {
+                    filtroClinicaLabel.textContent = 'Ninguna seleccionada';
+                    return;
+                }
+                if (selected.length === total) {
+                    filtroClinicaLabel.textContent = 'Todas las habitaciones';
+                    return;
+                }
+                if (selected.length === 1) {
+                    const item = filtroClinicaItems.find(function (x) { return String(prop(x, 'id')) === selected[0]; });
+                    filtroClinicaLabel.textContent = item ? prop(item, 'nombre') : '1 habitación';
+                    return;
+                }
+                filtroClinicaLabel.textContent = selected.length + ' habitaciones seleccionadas';
+            }
+
+            function setAllFiltroClinicas(checked) {
+                if (!filtroClinicaList) return;
+                filtroClinicaList.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+                    cb.checked = checked;
+                });
+                updateFiltroClinicaLabel();
+            }
+
+            function onFiltroClinicaChanged() {
+                updateFiltroClinicaLabel();
+                syncCalendarsAndRefresh();
+            }
+
+            function getClinicaFilterParam() {
+                const ids = getSelectedClinicaFilters();
+                return ids.length ? ids.join(',') : '';
+            }
+
+            function getDefaultClinicaForNewCita() {
+                const selected = getSelectedClinicaFilters();
+                return selected.length === 1 ? selected[0] : null;
+            }
+
+            function getActiveResourcesForDay() {
+                const selected = getSelectedClinicaFilters();
+                const list = calendarResources || [];
+                if (!selected.length) return [];
+                return list.filter(function (r) { return selected.indexOf(String(r.id)) >= 0; });
+            }
+
+            function formatBsDateTime(date) {
+                if (!date || isNaN(date.getTime())) return '';
+                return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+                    'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+            }
+
+            function isSameCalendarDay(a, b) {
+                if (!a || !b) return false;
+                return a.getFullYear() === b.getFullYear() &&
+                    a.getMonth() === b.getMonth() &&
+                    a.getDate() === b.getDate();
+            }
+
+            function fetchEventsFromApi(startIso, endIso) {
+                const clinicaParam = getClinicaFilterParam();
+                if (!clinicaParam) {
+                    return $.Deferred().resolve([]).promise();
+                }
+                return $.getJSON(urls.events, {
+                    start: startIso,
+                    end: endIso,
+                    clinicas: clinicaParam
+                }).then(function (data) {
+                    if (!Array.isArray(data)) return [];
+                    return data.map(mapEventToAppointment).filter(Boolean);
+                });
+            }
+
+            function fetchEventsForBsCalendar(requestData) {
+                const start = requestData.fromDate + 'T00:00:00';
+                const end = requestData.toDate + 'T23:59:59';
+                return new Promise(function (resolve, reject) {
+                    fetchEventsFromApi(start, end).then(resolve).fail(function (xhr, status, err) {
+                        reject(err || status || xhr);
+                    });
+                });
+            }
+
+            function snapMinutes(minutes) {
+                return Math.round(minutes / ROOMS_SLOT_MINUTES) * ROOMS_SLOT_MINUTES;
+            }
+
+            function clampMinutes(minutes) {
+                const min = ROOMS_HOUR_START * 60;
+                const max = ROOMS_HOUR_END * 60;
+                return Math.max(min, Math.min(max, snapMinutes(minutes)));
+            }
+
+            function getMinutesFromY(bodyEl, clientY) {
+                const rect = bodyEl.getBoundingClientRect();
+                const y = Math.max(0, Math.min(clientY - rect.top, rect.height - 1));
+                return ROOMS_HOUR_START * 60 + y / ROOMS_PX_PER_MINUTE;
+            }
+
+            function minutesToDate(dayDate, totalMinutes) {
+                const d = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+                d.setHours(Math.floor(totalMinutes / 60), totalMinutes % 60, 0, 0);
+                return d;
+            }
+
+            function getColumnAtPoint(clientX, clientY) {
+                const el = document.elementFromPoint(clientX, clientY);
+                if (!el) return null;
+                const column = el.closest('.rooms-day-column');
+                const body = el.closest('.rooms-day-col-body');
+                if (!column || !body) return null;
+                return {
+                    body: body,
+                    clinicaId: column.getAttribute('data-clinica-id')
+                };
+            }
+
+            function postRoomsDayUpdate(id, inicio, fin, todoelDia, clinicaId, previousMeta) {
+                $.post(urls.updateDates, {
+                    id: id,
+                    inicio: inicio,
+                    fin: fin,
+                    todoelDia: !!todoelDia,
+                    clinica: clinicaId || null
+                }, function (result) {
+                    if (!result.success) {
+                        alert(result.message || 'No se pudo actualizar.');
+                        rerenderRoomsDayColumns();
+                    } else if (result.data) {
+                        navigateCalendarToAppointment(result.data);
+                        applyAppointmentChange(result.data, {
+                            isNew: false,
+                            previousId: previousMeta ? previousMeta.id : id,
+                            previousCalendarId: previousMeta ? previousMeta.calendarId : clinicaId,
+                            previousStart: previousMeta ? previousMeta.start : null
+                        });
+                    }
+                }).fail(function () {
+                    rerenderRoomsDayColumns();
+                });
+            }
+
+            function fetchEventsForDate(date) {
+                const dateStr = formatDateOnly(date);
+                return fetchEventsFromApi(dateStr + 'T00:00:00', dateStr + 'T23:59:59');
+            }
+
+            function buildRoomsDayApptElement(item) {
+                const color = getAppointmentColor(item.appt);
+                const el = document.createElement('div');
+                el.className = 'rooms-day-appt';
+                el.setAttribute('data-appt-id', item.appt.id);
+                el.title = item.appt.title;
+                el.style.cssText = 'top:' + item.top + 'px;height:' + item.height + 'px;left:calc(' + item.leftPct +
+                    '% + 2px);width:calc(' + item.widthPct + '% - 4px);background:' + color + ';border-color:' + color + ';';
+                el.innerHTML = '<span class="rooms-day-appt-text">' + escapeHtml(item.appt.title) + '</span>' +
+                    '<div class="rooms-day-appt-resize"></div>';
+                return el;
+            }
+
+            function rerenderRoomsDayColumns(clinicaIds) {
+                const ids = clinicaIds && clinicaIds.length
+                    ? clinicaIds.map(String)
+                    : getActiveResourcesForDay().map(function (r) { return String(r.id); });
+                ids.forEach(function (clinicaId) {
+                    const column = document.querySelector('.rooms-day-column[data-clinica-id="' + clinicaId + '"]');
+                    if (!column) return;
+                    const body = column.querySelector('.rooms-day-col-body');
+                    if (!body) return;
+                    body.querySelectorAll('.rooms-day-appt').forEach(function (el) { el.remove(); });
+                    const colApps = roomsDayState.appointments.filter(function (a) {
+                        return String(a.calendarId) === clinicaId;
+                    });
+                    const laidOut = layoutColumnAppointments(colApps, roomsDayState.currentDate);
+                    laidOut.forEach(function (item) {
+                        body.appendChild(buildRoomsDayApptElement(item));
+                    });
+                });
+            }
+
+            function getAppointmentColor(appt) {
+                const props = appt.cita || {};
+                const estatus = props.Estatus || props.estatus;
+                return appt.color || (estatus && estatusColors[estatus]) || '#667eea';
+            }
+
+            function layoutColumnAppointments(appointments, dayDate) {
+                const dayStart = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+                const dayEnd = new Date(dayStart);
+                dayEnd.setDate(dayEnd.getDate() + 1);
+
+                const items = (appointments || []).map(function (a) {
+                    const start = parseDateValue(a.start);
+                    const end = parseDateValue(a.end);
+                    if (!start || !end) return null;
+                    if (end <= dayStart || start >= dayEnd) return null;
+
+                    const clipStart = start < dayStart ? dayStart : start;
+                    const clipEnd = end > dayEnd ? dayEnd : end;
+                    const startMinutes = clipStart.getHours() * 60 + clipStart.getMinutes();
+                    const endMinutes = clipEnd.getHours() * 60 + clipEnd.getMinutes();
+                    const gridStart = ROOMS_HOUR_START * 60;
+                    const gridEnd = ROOMS_HOUR_END * 60;
+                    const topMin = Math.max(0, startMinutes - gridStart);
+                    const bottomMin = Math.min(gridEnd - gridStart, endMinutes - gridStart);
+                    if (bottomMin <= topMin) return null;
+
+                    return {
+                        appt: a,
+                        startMs: clipStart.getTime(),
+                        endMs: clipEnd.getTime(),
+                        top: topMin * ROOMS_PX_PER_MINUTE,
+                        height: Math.max((bottomMin - topMin) * ROOMS_PX_PER_MINUTE, 18)
+                    };
+                }).filter(Boolean).sort(function (x, y) {
+                    return x.startMs - y.startMs || y.endMs - x.endMs;
+                });
+
+                const lanes = [];
+                items.forEach(function (item) {
+                    let placed = false;
+                    for (let i = 0; i < lanes.length; i++) {
+                        const laneItems = lanes[i];
+                        const last = laneItems[laneItems.length - 1];
+                        if (!last || last.endMs <= item.startMs) {
+                            laneItems.push(item);
+                            item.lane = i;
+                            placed = true;
+                            break;
+                        }
+                    }
+                    if (!placed) {
+                        item.lane = lanes.length;
+                        lanes.push([item]);
+                    }
+                });
+
+                const laneCount = Math.max(lanes.length, 1);
+                items.forEach(function (item) {
+                    item.laneCount = laneCount;
+                    item.widthPct = 100 / laneCount;
+                    item.leftPct = item.lane * item.widthPct;
+                });
+                return items;
+            }
+
+            function buildRoomsDayGridHtml(date, resources, allAppointments) {
+                if (!resources.length) {
+                    return '<div class="rooms-day-empty">Seleccione al menos una habitación en el filtro.</div>';
+                }
+
+                const slotsPerHour = 60 / ROOMS_SLOT_MINUTES;
+                const slotCount = (ROOMS_HOUR_END - ROOMS_HOUR_START) * slotsPerHour;
+                const bodyHeight = slotCount * 30;
+                let html = '<div class="rooms-day-grid">';
+
+                html += '<div class="rooms-day-time-col">';
+                html += '<div class="rooms-day-time-header"></div>';
+                for (let i = 0; i < slotCount; i++) {
+                    const totalMinutes = ROOMS_HOUR_START * 60 + i * ROOMS_SLOT_MINUTES;
+                    const hour = Math.floor(totalMinutes / 60);
+                    const minute = totalMinutes % 60;
+                    const label = minute === 0 ? pad(hour) + ':00' : '';
+                    html += '<div class="rooms-day-time-label" style="height:30px;line-height:30px;">' + label + '</div>';
+                }
+                html += '</div>';
+
+                html += '<div class="rooms-day-columns">';
+                resources.forEach(function (resource, colIdx) {
+                    const colApps = allAppointments.filter(function (a) {
+                        return String(a.calendarId) === String(resource.id);
+                    });
+                    const laidOut = layoutColumnAppointments(colApps, date);
+                    const dateLabel = formatResourceDate(date);
+
+                    html += '<div class="rooms-day-column" data-clinica-id="' + resource.id + '">';
+                    html += '<div class="resource-clinic-name">' + escapeHtml(resource.title) + '</div>';
+                    html += '<div class="resource-clinic-date">' + escapeHtml(dateLabel) + '</div>';
+                    html += '<div class="rooms-day-col-body" style="height:' + bodyHeight + 'px;">';
+
+                    for (let i = 0; i < slotCount; i++) {
+                        const totalMinutes = ROOMS_HOUR_START * 60 + i * ROOMS_SLOT_MINUTES;
+                        const hour = Math.floor(totalMinutes / 60);
+                        const minute = totalMinutes % 60;
+                        html += '<div class="rooms-day-slot" data-clinica-id="' + resource.id + '" data-hour="' + hour +
+                            '" data-minute="' + minute + '" style="height:30px;"></div>';
+                    }
+
+                    laidOut.forEach(function (item) {
+                        const color = getAppointmentColor(item.appt);
+                        html += '<div class="rooms-day-appt" data-appt-id="' + item.appt.id + '" title="' +
+                            escapeHtml(item.appt.title) + '" style="top:' + item.top + 'px;height:' + item.height +
+                            'px;left:calc(' + item.leftPct + '% + 2px);width:calc(' + item.widthPct + '% - 4px);background:' +
+                            color + ';border-color:' + color + ';">' +
+                            '<span class="rooms-day-appt-text">' + escapeHtml(item.appt.title) + '</span>' +
+                            '<div class="rooms-day-appt-resize"></div></div>';
+                    });
+
+                    html += '</div></div>';
+                });
+                html += '</div></div>';
+                return html;
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function updateRoomsDayTitle() {
+                const titleEl = document.getElementById('roomsDayTitle');
+                if (!titleEl) return;
+                titleEl.textContent = formatResourceDate(roomsDayState.currentDate);
+            }
+
+            function renderRoomsDayView() {
+                const gridEl = document.getElementById('roomsDayGrid');
+                if (!gridEl) return;
+
+                updateRoomsDayTitle();
+                const resources = getActiveResourcesForDay();
+                gridEl.innerHTML = '<div class="rooms-day-empty"><div class="spinner-border text-primary" role="status"></div></div>';
+
+                return fetchEventsForDate(roomsDayState.currentDate).then(function (appointments) {
+                    roomsDayState.appointments = appointments;
+                    gridEl.innerHTML = buildRoomsDayGridHtml(roomsDayState.currentDate, resources, appointments);
+                }).fail(function () {
+                    gridEl.innerHTML = '<div class="rooms-day-empty text-danger">No se pudieron cargar las reservaciones.</div>';
+                });
+            }
+
+            function bindRoomsDayGridEvents() {
+                const gridEl = document.getElementById('roomsDayGrid');
+                if (!gridEl || gridEl._roomsBound) return;
+                gridEl._roomsBound = true;
+
+                function onDocumentMouseMove(e) {
+                    if (!roomsInteraction) return;
+                    const st = roomsInteraction;
+
+                    if (st.mode === 'select') {
+                        st.moved = true;
+                        updateSelectPreview(e.clientY);
+                    } else if (st.mode === 'move') {
+                        const col = getColumnAtPoint(e.clientX, e.clientY);
+                        if (!col) return;
+                        if (Math.abs(e.clientY - st.startY) > 4 || String(col.clinicaId) !== String(st.originalClinicaId)) {
+                            st.moved = true;
+                        }
+                        if (st.apptEl.parentElement !== col.body) {
+                            col.body.appendChild(st.apptEl);
+                        }
+                        const bodyRect = col.body.getBoundingClientRect();
+                        let topPx = e.clientY - bodyRect.top - st.offsetY;
+                        const maxTop = col.body.clientHeight - st.apptEl.offsetHeight;
+                        topPx = Math.max(0, Math.min(topPx, maxTop));
+                        st.apptEl.style.top = topPx + 'px';
+                        st.apptEl.style.left = '2px';
+                        st.apptEl.style.width = 'calc(100% - 4px)';
+                        st.targetBody = col.body;
+                        st.targetClinicaId = col.clinicaId;
+                        st.topPx = topPx;
+                    } else if (st.mode === 'resize') {
+                        if (Math.abs(e.clientY - st.startY) > 4) {
+                            st.moved = true;
+                        }
+                        const endMinutes = clampMinutes(getMinutesFromY(st.body, e.clientY));
+                        const minEnd = st.startMinutes + ROOMS_SLOT_MINUTES;
+                        const maxEnd = ROOMS_HOUR_END * 60;
+                        st.endMinutes = Math.max(minEnd, Math.min(maxEnd, endMinutes));
+                        const top = (st.startMinutes - ROOMS_HOUR_START * 60) * ROOMS_PX_PER_MINUTE;
+                        const height = (st.endMinutes - st.startMinutes) * ROOMS_PX_PER_MINUTE;
+                        st.apptEl.style.top = top + 'px';
+                        st.apptEl.style.height = Math.max(height, 18) + 'px';
+                    }
+                }
+
+                function finishInteraction() {
+                    if (!roomsInteraction) return;
+                    const st = roomsInteraction;
+                    document.removeEventListener('mousemove', onDocumentMouseMove);
+                    document.removeEventListener('mouseup', onDocumentMouseUp);
+                    document.body.classList.remove('rooms-day-dragging');
+
+                    if (st.mode === 'select') {
+                        if (st.preview && st.preview.parentNode) {
+                            st.preview.remove();
+                        }
+                        suppressRoomsClickUntil = Date.now() + 250;
+                        if (!st.moved) {
+                            const start = minutesToDate(roomsDayState.currentDate, st.anchorMinutes);
+                            const end = new Date(start.getTime() + 60 * 60 * 1000);
+                            openNewCita(start, end, false, st.clinicaId);
+                        } else if (st.selectStartMinutes != null && st.selectEndMinutes != null) {
+                            const start = minutesToDate(roomsDayState.currentDate, st.selectStartMinutes);
+                            const end = minutesToDate(roomsDayState.currentDate, st.selectEndMinutes);
+                            openNewCita(start, end, false, st.clinicaId);
+                        }
+                    } else if (st.mode === 'move') {
+                        st.apptEl.classList.remove('dragging');
+                        if (st.moved && st.topPx != null) {
+                            suppressRoomsClickUntil = Date.now() + 250;
+                            const startMinutes = clampMinutes(ROOMS_HOUR_START * 60 + st.topPx / ROOMS_PX_PER_MINUTE);
+                            const start = minutesToDate(roomsDayState.currentDate, startMinutes);
+                            const end = new Date(start.getTime() + st.durationMs);
+                            postRoomsDayUpdate(
+                                st.appt.id,
+                                start.toISOString(),
+                                end.toISOString(),
+                                st.appt.allDay,
+                                st.targetClinicaId || st.appt.calendarId,
+                                { id: st.appt.id, calendarId: st.appt.calendarId, start: st.appt.start }
+                            );
+                        } else {
+                            openEditCita(st.appt.cita || {}, st.appt.start, st.appt.end, st.appt.allDay);
+                        }
+                    } else if (st.mode === 'resize') {
+                        st.apptEl.classList.remove('resizing');
+                        if (st.moved) {
+                            suppressRoomsClickUntil = Date.now() + 250;
+                            const start = minutesToDate(roomsDayState.currentDate, st.startMinutes);
+                            const end = minutesToDate(roomsDayState.currentDate, st.endMinutes);
+                            postRoomsDayUpdate(
+                                st.appt.id,
+                                start.toISOString(),
+                                end.toISOString(),
+                                st.appt.allDay,
+                                st.appt.calendarId,
+                                { id: st.appt.id, calendarId: st.appt.calendarId, start: st.appt.start }
+                            );
+                        }
+                    }
+
+                    roomsInteraction = null;
+                }
+
+                function onDocumentMouseUp() {
+                    finishInteraction();
+                }
+
+                function updateSelectPreview(clientY) {
+                    const st = roomsInteraction;
+                    if (!st || st.mode !== 'select') return;
+                    const endMinutes = clampMinutes(getMinutesFromY(st.body, clientY));
+                    let minM = Math.min(st.anchorMinutes, endMinutes);
+                    let maxM = Math.max(st.anchorMinutes, endMinutes);
+                    if (maxM - minM < ROOMS_SLOT_MINUTES) {
+                        if (endMinutes >= st.anchorMinutes) {
+                            maxM = minM + ROOMS_SLOT_MINUTES;
+                        } else {
+                            minM = maxM - ROOMS_SLOT_MINUTES;
+                        }
+                    }
+                    minM = clampMinutes(minM);
+                    maxM = clampMinutes(maxM);
+                    if (maxM <= minM) maxM = Math.min(ROOMS_HOUR_END * 60, minM + ROOMS_SLOT_MINUTES);
+                    st.selectStartMinutes = minM;
+                    st.selectEndMinutes = maxM;
+                    const top = (minM - ROOMS_HOUR_START * 60) * ROOMS_PX_PER_MINUTE;
+                    const height = Math.max((maxM - minM) * ROOMS_PX_PER_MINUTE, 18);
+                    st.preview.style.top = top + 'px';
+                    st.preview.style.height = height + 'px';
+                }
+
+                function startDocumentDrag() {
+                    document.addEventListener('mousemove', onDocumentMouseMove);
+                    document.addEventListener('mouseup', onDocumentMouseUp);
+                    document.body.classList.add('rooms-day-dragging');
+                }
+
+                gridEl.addEventListener('mousedown', function (e) {
+                    if (e.button !== 0 || roomsInteraction) return;
+
+                    const resizeHandle = e.target.closest('.rooms-day-appt-resize');
+                    if (resizeHandle) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const apptEl = resizeHandle.closest('.rooms-day-appt');
+                        const id = apptEl.getAttribute('data-appt-id');
+                        const appt = roomsDayState.appointments.find(function (a) { return String(a.id) === String(id); });
+                        if (!appt) return;
+                        const start = parseDateValue(appt.start);
+                        const end = parseDateValue(appt.end);
+                        if (!start || !end) return;
+                        const startMinutes = start.getHours() * 60 + start.getMinutes();
+                        const endMinutes = end.getHours() * 60 + end.getMinutes();
+                        apptEl.classList.add('resizing');
+                        roomsInteraction = {
+                            mode: 'resize',
+                            appt: appt,
+                            apptEl: apptEl,
+                            body: apptEl.closest('.rooms-day-col-body'),
+                            startMinutes: startMinutes,
+                            endMinutes: endMinutes,
+                            startY: e.clientY,
+                            moved: false
+                        };
+                        startDocumentDrag();
+                        return;
+                    }
+
+                    const apptEl = e.target.closest('.rooms-day-appt');
+                    if (apptEl) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const id = apptEl.getAttribute('data-appt-id');
+                        const appt = roomsDayState.appointments.find(function (a) { return String(a.id) === String(id); });
+                        if (!appt) return;
+                        const start = parseDateValue(appt.start);
+                        const end = parseDateValue(appt.end);
+                        if (!start || !end) return;
+                        const apptRect = apptEl.getBoundingClientRect();
+                        roomsInteraction = {
+                            mode: 'move',
+                            appt: appt,
+                            apptEl: apptEl,
+                            durationMs: end.getTime() - start.getTime(),
+                            offsetY: e.clientY - apptRect.top,
+                            startY: e.clientY,
+                            originalClinicaId: appt.calendarId,
+                            moved: false,
+                            targetClinicaId: appt.calendarId
+                        };
+                        apptEl.classList.add('dragging');
+                        startDocumentDrag();
+                        return;
+                    }
+
+                    const body = e.target.closest('.rooms-day-col-body');
+                    if (!body) return;
+                    e.preventDefault();
+                    const column = body.closest('.rooms-day-column');
+                    const clinicaId = column.getAttribute('data-clinica-id');
+                    const anchorMinutes = clampMinutes(getMinutesFromY(body, e.clientY));
+                    const preview = document.createElement('div');
+                    preview.className = 'rooms-day-select-preview';
+                    body.appendChild(preview);
+                    roomsInteraction = {
+                        mode: 'select',
+                        body: body,
+                        clinicaId: clinicaId,
+                        anchorMinutes: anchorMinutes,
+                        selectStartMinutes: anchorMinutes,
+                        selectEndMinutes: Math.min(ROOMS_HOUR_END * 60, anchorMinutes + ROOMS_SLOT_MINUTES),
+                        preview: preview,
+                        moved: false
+                    };
+                    updateSelectPreview(e.clientY);
+                    startDocumentDrag();
+                });
+            }
+
+            function navigateRoomsDay(deltaDays) {
+                const d = new Date(roomsDayState.currentDate);
+                d.setDate(d.getDate() + deltaDays);
+                roomsDayState.currentDate = d;
+                renderRoomsDayView();
+            }
+
+            function setCalendarView(view) {
+                currentCalendarView = view;
+                document.querySelectorAll('[data-calendar-view]').forEach(function (btn) {
+                    btn.classList.toggle('active', btn.getAttribute('data-calendar-view') === view);
+                });
+
+                const roomsEl = document.getElementById('roomsDayView');
+                const calEl = document.getElementById('calendar');
+                if (view === 'rooms-day') {
+                    roomsEl.classList.remove('d-none');
+                    calEl.classList.add('d-none');
+                    renderRoomsDayView();
+                } else {
+                    roomsEl.classList.add('d-none');
+                    calEl.classList.remove('d-none');
+                    if (!bsCalendarReady) {
+                        initBsCalendar(view);
+                    } else {
+                        showBsCalendarView(view);
+                    }
+                }
+            }
+
+            function showBsCalendarView(view) {
+                requestAnimationFrame(function () {
+                    $calendar.bsCalendar('setDate', roomsDayState.currentDate);
+                    const calData = $calendar.data('bsCalendar');
+                    if (calData && calData.view === view) {
+                        $calendar.bsCalendar('refresh');
+                    } else {
+                        $calendar.bsCalendar('setView', view);
+                    }
+                });
+            }
+
+            function navigateCalendarToAppointment(resultData) {
+                if (!resultData) return;
+                const ev = mapEventToAppointment(resultData);
+                const start = parseDateValue(ev.start);
+                if (!start) return;
+                roomsDayState.currentDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                $calendar.bsCalendar('setDate', roomsDayState.currentDate);
+            }
+
+            function onCitaSaved(result, wasNew) {
+                modal.hide();
+                if (result && result.data) {
+                    const prevDay = new Date(roomsDayState.currentDate.getTime());
+                    navigateCalendarToAppointment(result.data);
+                    const dayChanged = currentCalendarView === 'rooms-day' &&
+                        !isSameCalendarDay(prevDay, roomsDayState.currentDate);
+                    if (dayChanged) {
+                        renderRoomsDayView();
+                    } else {
+                        applyAppointmentChange(result.data, {
+                            isNew: !!wasNew,
+                            previousId: lastSavedCitaMeta ? lastSavedCitaMeta.id : null,
+                            previousCalendarId: lastSavedCitaMeta ? lastSavedCitaMeta.calendarId : null,
+                            previousStart: lastSavedCitaMeta ? lastSavedCitaMeta.start : null
+                        });
+                    }
+                }
+                lastSavedCitaMeta = null;
+            }
+
+            function parsePayloadDate(part) {
+                if (!part || !part.date) return new Date();
+                const time = part.time || '08:00';
+                return new Date(part.date + 'T' + time + ':00');
+            }
+
+            function toIsoFromDragPart(part) {
+                const d = parsePayloadDate(part);
+                return isNaN(d.getTime()) ? null : d.toISOString();
+            }
+
+            function mapEventToAppointment(ev) {
+                if (!ev) return null;
+                const props = ev.extendedProps || ev.ExtendedProps || ev.cita || {};
+                const start = parseDateValue(ev.start || ev.Start || props.Inicio || props.inicio);
+                const end = parseDateValue(ev.end || ev.End || props.Fin || props.fin);
+                if (!start || !end) return null;
+                const estatus = props.Estatus || props.estatus;
+                const color = ev.backgroundColor || (estatus && estatusColors[estatus]) || '#667eea';
+                const clinica = ev.resourceId || props.Clinica || props.clinica || '';
+                return {
+                    id: String(ev.id != null ? ev.id : ev.Id),
+                    title: ev.title || ev.Title || props.Asunto || props.asunto || 'Reservación',
+                    start: formatBsDateTime(start),
+                    end: formatBsDateTime(end),
+                    allDay: !!(ev.allDay || ev.AllDay || props.TodoelDia || props.todoelDia),
+                    calendarId: String(clinica),
+                    color: color,
+                    cita: props
+                };
+            }
+
+            function loadCalendarResources() {
+                return $.getJSON(urls.resources).then(function (data) {
+                    calendarResources = data || [];
+                });
+            }
+
+            function applyAppointmentChange(eventDto, options) {
+                options = options || {};
+                const appt = mapEventToAppointment(eventDto);
+                if (!appt) return;
+
+                const prevId = options.previousId != null ? String(options.previousId) : null;
+                const prevCal = options.previousCalendarId != null ? String(options.previousCalendarId) : null;
+                const prevStart = options.previousStart ? parseDateValue(options.previousStart) : null;
+                const columnsToRedraw = [];
+
+                if (prevId) {
+                    roomsDayState.appointments = roomsDayState.appointments.filter(function (a) {
+                        return String(a.id) !== prevId;
+                    });
+                    document.querySelectorAll('[data-appt-id="' + prevId + '"]').forEach(function (el) { el.remove(); });
+                    if (prevCal) columnsToRedraw.push(prevCal);
+                }
+
+                const start = parseDateValue(appt.start);
+                const onRoomsDay = currentCalendarView === 'rooms-day';
+                const onCurrentDay = start && isSameCalendarDay(start, roomsDayState.currentDate);
+                const visibleRoom = getActiveResourcesForDay().some(function (r) {
+                    return String(r.id) === String(appt.calendarId);
+                });
+
+                if (onRoomsDay) {
+                    if (onCurrentDay && visibleRoom) {
+                        const idx = roomsDayState.appointments.findIndex(function (a) {
+                            return String(a.id) === String(appt.id);
+                        });
+                        if (idx >= 0) roomsDayState.appointments[idx] = appt;
+                        else roomsDayState.appointments.push(appt);
+                        columnsToRedraw.push(String(appt.calendarId));
+                    } else if (prevStart && isSameCalendarDay(prevStart, roomsDayState.currentDate) && prevCal) {
+                        columnsToRedraw.push(prevCal);
+                    }
+                    const uniqueCols = columnsToRedraw.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+                    if (uniqueCols.length) rerenderRoomsDayColumns(uniqueCols);
+                }
+
+                if (bsCalendarReady && currentCalendarView !== 'rooms-day') {
+                    if (prevId && prevId !== String(appt.id)) {
+                        $calendar.bsCalendar('deleteAppointment', { id: prevId });
+                    }
+                    if (options.isNew) {
+                        $calendar.bsCalendar('addAppointment', appt);
+                    } else {
+                        $calendar.bsCalendar('editAppointment', appt);
+                    }
+                }
+            }
+
+            function removeAppointmentFromCalendar(id, meta) {
+                meta = meta || {};
+                const sid = String(id);
+                if (currentCalendarView === 'rooms-day') {
+                    roomsDayState.appointments = roomsDayState.appointments.filter(function (a) {
+                        return String(a.id) !== sid;
+                    });
+                    document.querySelectorAll('[data-appt-id="' + sid + '"]').forEach(function (el) { el.remove(); });
+                    const cols = [];
+                    if (meta.calendarId) cols.push(String(meta.calendarId));
+                    if (cols.length) rerenderRoomsDayColumns(cols);
+                } else if (bsCalendarReady) {
+                    $calendar.bsCalendar('deleteAppointment', { id: sid });
+                }
             }
 
             function showAlert(message, isError) {
@@ -557,8 +1537,30 @@
 
             function loadClinicasFiltro() {
                 return $.getJSON(urls.clinicasFiltro).then(function (data) {
-                    fillSelect(filtroClinica, data, null, '-- Todas las Habitaciones --', function (x) { return prop(x, 'nombre'); });
+                    renderFiltroClinicas(data);
                 });
+            }
+
+            function renderFiltroClinicas(data) {
+                filtroClinicaItems = data || [];
+                if (!filtroClinicaList) return;
+                filtroClinicaList.innerHTML = '';
+                if (!data || !data.length) {
+                    filtroClinicaList.innerHTML = '<span class="text-muted small">Sin habitaciones</span>';
+                    updateFiltroClinicaLabel();
+                    return;
+                }
+                data.forEach(function (x) {
+                    const id = prop(x, 'id');
+                    const nombre = prop(x, 'nombre') || '';
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+                    div.innerHTML =
+                        '<input class="form-check-input" type="checkbox" value="' + id + '" id="filtroCl_' + id + '" checked>' +
+                        '<label class="form-check-label" for="filtroCl_' + id + '">' + escapeHtml(nombre) + '</label>';
+                    filtroClinicaList.appendChild(div);
+                });
+                updateFiltroClinicaLabel();
             }
 
             function getClinicaEmpresaId() {
@@ -687,7 +1689,7 @@
                 loadDoctores(null);
             }
 
-            function fillForm(data, fcStart, fcEnd, fcAllDay) {
+            function fillForm(data, evtStart, evtEnd, evtAllDay) {
                 document.getElementById('IdAgendaCita').value = data.IdAgendaCita || data.idAgendaCita || 0;
                 document.getElementById('IdCalendario').value = data.IdCalendario || data.idCalendario || 1;
                 document.getElementById('Codigo').value = data.Codigo || data.codigo || 0;
@@ -698,13 +1700,13 @@
                 document.getElementById('Telefono2').value = data.Telefono2 || data.telefono2 || '';
                 document.getElementById('Celular').value = data.Celular || data.celular || '';
 
-                var inicioDate = fcStart ? new Date(fcStart) : parseDateValue(data.Inicio || data.inicio);
-                var finDate = fcEnd ? new Date(fcEnd) : parseDateValue(data.Fin || data.fin);
+                var inicioDate = evtStart ? parseDateValue(evtStart) : parseDateValue(data.Inicio || data.inicio);
+                var finDate = evtEnd ? parseDateValue(evtEnd) : parseDateValue(data.Fin || data.fin);
                 if (!finDate && inicioDate) {
                     finDate = new Date(inicioDate.getTime() + 60 * 60 * 1000);
                 }
-                var todoelDia = fcAllDay !== undefined && fcAllDay !== null
-                    ? fcAllDay
+                var todoelDia = evtAllDay !== undefined && evtAllDay !== null
+                    ? evtAllDay
                     : (data.TodoelDia || data.todoelDia || false);
                 setFechaCampos(inicioDate, finDate, todoelDia);
 
@@ -762,6 +1764,7 @@
             }
 
             function openNewCita(start, end, allDay, clinicaId) {
+                lastSavedCitaMeta = null;
                 form.reset();
                 document.getElementById('IdAgendaCita').value = '0';
                 document.getElementById('IdCalendario').value = '1';
@@ -797,10 +1800,15 @@
                 }
             }
 
-            function openEditCita(props, fcStart, fcEnd, fcAllDay) {
+            function openEditCita(props, evtStart, evtEnd, evtAllDay) {
                 hideAlert();
+                lastSavedCitaMeta = {
+                    id: props.IdAgendaCita || props.idAgendaCita,
+                    calendarId: props.Clinica || props.clinica,
+                    start: evtStart || props.Inicio || props.inicio
+                };
                 new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
-                fillForm(props, fcStart, fcEnd, fcAllDay).then(function () {
+                fillForm(props, evtStart, evtEnd, evtAllDay).then(function () {
                     modalTitulo.textContent = 'Editar Reservación';
                     btnEliminar.classList.remove('d-none');
                     modal.show();
@@ -813,33 +1821,50 @@
             //}
 
             function getSelectedClinicaFilter() {
-                const val = filtroClinica.value;
-                return val ? val.toString() : '';
+                return getClinicaFilterParam();
             }
 
-            function refetchCalendar() {
-                calendar.refetchResources();
-                calendar.refetchEvents();
+            function refreshCalendar() {
+                if (currentCalendarView === 'rooms-day') {
+                    renderRoomsDayView();
+                } else {
+                    $calendar.bsCalendar('refresh');
+                }
             }
 
-            function postUpdateEvent(info) {
-                const endDate = info.event.end || info.event.start;
-                const newResource = info.newResource || (info.event.getResources && info.event.getResources()[0]);
-                const clinicaId = newResource ? newResource.id : null;
+            function syncCalendarsAndRefresh() {
+                refreshCalendar();
+            }
+
+            function postUpdateAppointment(appointment, dragExtras) {
+                const inicio = toIsoFromDragPart(dragExtras.start);
+                const fin = toIsoFromDragPart(dragExtras.end);
+                if (!inicio || !fin) {
+                    $calendar.bsCalendar('refresh');
+                    return;
+                }
 
                 $.post(urls.updateDates, {
-                    id: info.event.id,
-                    inicio: info.event.start.toISOString(),
-                    fin: endDate.toISOString(),
-                    todoelDia: info.event.allDay,
-                    clinica: clinicaId
+                    id: appointment.id,
+                    inicio: inicio,
+                    fin: fin,
+                    todoelDia: !!appointment.allDay,
+                    clinica: appointment.calendarId || null
                 }, function (result) {
                     if (!result.success) {
                         alert(result.message || 'No se pudo actualizar.');
-                        info.revert();
+                        $calendar.bsCalendar('refresh');
+                    } else if (result.data) {
+                        navigateCalendarToAppointment(result.data);
+                        applyAppointmentChange(result.data, {
+                            isNew: false,
+                            previousId: appointment.id,
+                            previousCalendarId: appointment.calendarId,
+                            previousStart: appointment.start
+                        });
                     }
                 }).fail(function () {
-                    info.revert();
+                    $calendar.bsCalendar('refresh');
                 });
             }
 
@@ -863,17 +1888,32 @@
             //    calendar.refetchEvents();
             //});
 
-            filtroClinica.addEventListener('change', function () {
-                refetchCalendar();
+            filtroClinicaList.addEventListener('change', function (e) {
+                if (e.target.matches('input[type="checkbox"]')) {
+                    onFiltroClinicaChanged();
+                }
+            });
+
+            document.getElementById('filtroClinicaTodas').addEventListener('click', function (e) {
+                e.preventDefault();
+                setAllFiltroClinicas(true);
+                syncCalendarsAndRefresh();
+            });
+
+            document.getElementById('filtroClinicaNinguna').addEventListener('click', function (e) {
+                e.preventDefault();
+                setAllFiltroClinicas(false);
+                syncCalendarsAndRefresh();
             });
 
             document.getElementById('btnNuevaCita').addEventListener('click', function () {
-                openNewCita(calendar.getDate(), null, false, null);
+                openNewCita(new Date(), null, false, getDefaultClinicaForNewCita());
             });
 
             document.getElementById('btnGuardarCita').addEventListener('click', function () {
                 hideAlert();
                 const data = getFormData();
+                const wasNew = !(parseInt(document.getElementById('IdAgendaCita').value, 10) > 0);
 
                 if (!data.Asunto) { showAlert('El asunto es requerido.', true); return; }
                 if (!data.Contacto) { showAlert('Debe seleccionar un paciente.', true); return; }
@@ -888,8 +1928,7 @@
                     data: JSON.stringify(data),
                     success: function (result) {
                         if (result.success) {
-                            modal.hide();
-                            calendar.refetchEvents();
+                            onCitaSaved(result, wasNew);
                         } else {
                             showAlert(result.message || 'Error al guardar.', true);
                         }
@@ -904,10 +1943,15 @@
                 const id = parseInt(document.getElementById('IdAgendaCita').value);
                 if (!id || !confirm('¿Está seguro de eliminar esta Reservación?')) return;
 
+                const deleteMeta = {
+                    calendarId: document.getElementById('Clinica').value,
+                    start: document.getElementById('Inicio').value
+                };
+
                 $.post(urls.delete, { id: id }, function (result) {
                     if (result.success) {
                         modal.hide();
-                        calendar.refetchEvents();
+                        removeAppointmentFromCalendar(id, deleteMeta);
                     } else {
                         showAlert(result.message || 'Error al eliminar.', true);
                     }
@@ -927,119 +1971,102 @@
                 }
             });
 
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                locale: 'es',
-                initialView: 'resourceTimeGridDay',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'resourceTimeGridDay,timeGridWeek,dayGridMonth,listWeek'
-                },
-                buttonText: {
-                    today: 'Hoy',
-                    resourceTimeGridDay: 'Día',
-                    timeGridWeek: 'Semana',
-                    dayGridMonth: 'Mes',
-                    listWeek: 'Lista'
-                },
-                views: {
-                    resourceTimeGridDay: {
-                        type: 'resourceTimeGrid',
-                        duration: { days: 1 },
-                        slotMinTime: '06:00:00',
-                        slotMaxTime: '22:00:00',
-                        slotDuration: '00:30:00',
-                        allDaySlot: false
+            function initBsCalendar(initialView) {
+                if (bsCalendarReady) return;
+                $calendar.bsCalendar({
+                    locale: 'es',
+                    title: 'Sistema de Reservaciones',
+                    startView: initialView || 'week',
+                    startDate: roomsDayState.currentDate,
+                    views: ['week', 'month', 'agenda'],
+                    mainColor: 'primary',
+                    storeState: false,
+                    ingoreStore: true,
+                    showAddButton: true,
+                    draggable: true,
+                    draggableSnapMinutes: 30,
+                    hourSlots: {
+                        start: 6,
+                        end: 22,
+                        height: 30
                     },
-                    timeGridWeek: {
-                        slotMinTime: '06:00:00',
-                        slotMaxTime: '22:00:00',
-                        slotDuration: '00:30:00',
-                        allDaySlot: false
-                    }
-                },
-                editable: true,
-                selectable: true,
-                selectMirror: true,
-                nowIndicator: true,
-                height: 'auto',
-                resourceOrder: 'title',
-                resources: function (fetchInfo, successCallback, failureCallback) {
-                    $.getJSON(urls.resources, function (data) {
-                        calendarResources = data || [];
-                        const filtro = getSelectedClinicaFilter();
-                        const list = filtro
-                            ? calendarResources.filter(function (r) { return r.id == filtro; })
-                            : calendarResources;
-                        successCallback(list);
-                    }).fail(function () {
-                        failureCallback();
-                    });
-                },
-                resourceLabelContent: function (arg) {
-                    const dateStr = formatResourceDate(calendar.getDate());
-                    return {
-                        html: '<div class="resource-clinic-name">' + arg.resource.title + '</div>' +
-                              '<div class="resource-clinic-date">' + dateStr + '</div>'
-                    };
-                },
-                resourceLabelDidMount: function (arg) {
-                    arg.el.classList.add('fc-resource-header');
-                },
-                events: function (info, successCallback, failureCallback) {
-                    $.ajax({
-                        url: urls.events,
-                        data: {
-                            start: info.startStr,
-                            end: info.endStr,
-                           // codigoDoctor: getSelectedDoctorFilter(),
-                            clinica: filtroClinica.value || ''
-                        },
-                        success: function (data) {
-                            successCallback(data);
-                        },
-                        error: function () {
-                            failureCallback();
+                    url: fetchEventsForBsCalendar,
+                    onAdd: function (payload) {
+                        const start = parsePayloadDate(payload.start);
+                        const end = parsePayloadDate(payload.end);
+                        openNewCita(start, end, false, getDefaultClinicaForNewCita());
+                    },
+                    onEdit: function (appointment, extras, dragExtras) {
+                        if (dragExtras && dragExtras.hourSlotRules) {
+                            postUpdateAppointment(appointment, dragExtras);
+                            return;
                         }
-                    });
-                },
-                select: function (info) {
-                    const clinicaId = info.resource
-                        ? info.resource.id
-                        : (filtroClinica.value || null);
-                    openNewCita(info.start, info.end, info.allDay, clinicaId);
-                    calendar.unselect();
-                },
-                eventClick: function (info) {
-                    if (info.event.extendedProps) {
-                        openEditCita(
-                            info.event.extendedProps,
-                            info.event.start,
-                            info.event.end,
-                            info.event.allDay
-                        );
+                        const props = appointment.cita || {};
+                        openEditCita(props, appointment.start, appointment.end, appointment.allDay);
+                    },
+                    onDelete: function (appointment) {
+                        const id = parseInt(appointment.id, 10);
+                        if (!id || !confirm('¿Está seguro de eliminar esta Reservación?')) {
+                            $calendar.bsCalendar('refresh');
+                            return;
+                        }
+                        $.post(urls.delete, { id: id }, function (result) {
+                            if (!result.success) {
+                                alert(result.message || 'Error al eliminar.');
+                                $calendar.bsCalendar('refresh');
+                            } else {
+                                removeAppointmentFromCalendar(id, {
+                                    calendarId: appointment.calendarId,
+                                    start: appointment.start
+                                });
+                            }
+                        }).fail(function () {
+                            $calendar.bsCalendar('refresh');
+                        });
+                    },
+                    onNavigateForward: function () {
+                        syncBsCalendarDateToRooms();
+                    },
+                    onNavigateBack: function () {
+                        syncBsCalendarDateToRooms();
+                    },
+                    onView: function () {
+                        syncBsCalendarDateToRooms();
                     }
-                },
-                eventDrop: postUpdateEvent,
-                eventResize: postUpdateEvent,
-                eventDidMount: function (info) {
-                    const props = info.event.extendedProps || {};
-                    const etiqueta = props.Etiqueta || props.etiqueta;
-                    if (etiqueta && etiquetaColors[etiqueta]) {
-                        info.el.style.backgroundColor = etiquetaColors[etiqueta];
-                        info.el.style.borderColor = etiquetaColors[etiqueta];
+                });
+                bsCalendarReady = true;
+            }
+
+            function syncBsCalendarDateToRooms() {
+                try {
+                    const data = $calendar.data('bsCalendar');
+                    if (data && data.date) {
+                        roomsDayState.currentDate = new Date(data.date.getTime());
                     }
-                },
-                resourceLaneDidMount: function (arg) {
-                    const idx = arg.resource.getIndex();
-                    arg.el.classList.add(idx % 2 === 0 ? 'resource-col-even' : 'resource-col-odd');
-                }
+                } catch (e) { /* ignore */ }
+            }
+
+            document.querySelector('.calendar-view-switcher').addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-calendar-view]');
+                if (!btn) return;
+                setCalendarView(btn.getAttribute('data-calendar-view'));
             });
 
-            calendar.render();
-            loadClinicasFiltro();
-            //loadDoctoresFiltro();
+            document.getElementById('roomsDayPrev').addEventListener('click', function () { navigateRoomsDay(-1); });
+            document.getElementById('roomsDayNext').addEventListener('click', function () { navigateRoomsDay(1); });
+            document.getElementById('roomsDayToday').addEventListener('click', function () {
+                roomsDayState.currentDate = new Date();
+                renderRoomsDayView();
+            });
+
+            bindRoomsDayGridEvents();
+
+            loadCalendarResources().then(function () {
+                return loadClinicasFiltro();
+            }).then(function () {
+                setCalendarView('rooms-day');
+            });
+
             modalEl.addEventListener('hidden.bs.modal', resetForm);
         })();
     </script>

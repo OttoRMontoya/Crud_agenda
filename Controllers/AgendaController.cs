@@ -126,19 +126,35 @@ namespace Crud_agenda.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetEvents(DateTime start, DateTime end, int? codigoDoctor, int? clinica)
+        public JsonResult GetEvents(DateTime start, DateTime end, int? codigoDoctor, int? clinica, string clinicas)
         {
             var query = db.Agenda.Where(x => x.Inicio < end && x.Fin > start);
 
             if (codigoDoctor.HasValue && codigoDoctor.Value > 0)
                 query = query.Where(x => x.CodigoDoctor == codigoDoctor.Value);
 
-            if (clinica.HasValue && clinica.Value > 0)
-                query = query.Where(x => x.Clinica == clinica.Value);
+            var clinicaIds = new List<int>();
+            if (!string.IsNullOrWhiteSpace(clinicas))
+            {
+                clinicaIds = clinicas
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList();
+            }
+            else if (clinica.HasValue && clinica.Value > 0)
+            {
+                clinicaIds.Add(clinica.Value);
+            }
+
+            if (clinicaIds.Any())
+                query = query.Where(x => clinicaIds.Contains(x.Clinica));
 
             var citas = query.OrderBy(x => x.Inicio).ToList();
+            var estatusColors = LoadEstatusColors();
 
-            var events = citas.Select(c => MapToEventDto(c)).ToList();
+            var events = citas.Select(c => MapToEventDto(c, estatusColors)).ToList();
             return Json(events, JsonRequestBehavior.AllowGet);
         }
 
@@ -373,9 +389,26 @@ namespace Crud_agenda.Controllers
             };
         }
 
-        private AgendaEventDto MapToEventDto(Agenda cita)
+        private Dictionary<int, string> LoadEstatusColors()
         {
-            var color = AgendaEtiquetas.GetColor(cita.Etiqueta);
+            return db.AgendaEstatus.ToDictionary(
+                e => e.IdEstatus,
+                e => string.IsNullOrWhiteSpace(e.Color) ? "#667eea" : e.Color);
+        }
+
+        private string GetEstatusColor(int estatusId, Dictionary<int, string> estatusColors = null)
+        {
+            string color;
+            if (estatusColors != null && estatusColors.TryGetValue(estatusId, out color))
+                return color;
+
+            var est = db.AgendaEstatus.Find(estatusId);
+            return est != null && !string.IsNullOrWhiteSpace(est.Color) ? est.Color : "#667eea";
+        }
+
+        private AgendaEventDto MapToEventDto(Agenda cita, Dictionary<int, string> estatusColors = null)
+        {
+            var color = GetEstatusColor(cita.Estatus, estatusColors);
             var doctor = db.AgendaDoctor.Find(cita.CodigoDoctor);
             var title = cita.Asunto + " - " + cita.Contacto;
             if (doctor != null)

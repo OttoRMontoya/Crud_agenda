@@ -20,6 +20,12 @@ namespace Crud_agenda.Models
         [Display(Name = "Descripción")]
         public string Descripcion { get; set; }
 
+        [Required(ErrorMessage = "El color es requerido")]
+        [StringLength(7)]
+        [Display(Name = "Color")]
+        [RegularExpression(@"^#[0-9A-Fa-f]{6}$", ErrorMessage = "El color debe ser un código hexadecimal válido (ej: #667eea)")]
+        public string Color { get; set; }
+
         [Display(Name = "Activo")]
         public bool Activo { get; set; }
 

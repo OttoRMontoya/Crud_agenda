@@ -7,7 +7,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-            <i class="bi bi-list-check"></i> GestiÛn de Estados
+            <i class="bi bi-list-check"></i> Gestiùn de Estados
         </h5>
         @Html.ActionLink("Nuevo Estado", "Create", new { }, new { @class = "btn btn-light btn-sm" })
     </div>
@@ -27,9 +27,10 @@
                         <tr>
                             <th>ID</th>
                             <th>Nombre del Estado</th>
-                            <th>DescripciÛn</th>
+                            <th>Color</th>
+                            <th>Descripciùn</th>
                             <th>Estado</th>
-                            <th>Fecha de CreaciÛn</th>
+                            <th>Fecha de Creaciùn</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -42,13 +43,22 @@
                                 </td>
                                 <td>@item.NombreEstatus</td>
                                 <td>
+                                    @{
+                                        var itemColor = string.IsNullOrWhiteSpace(item.Color) ? "#667eea" : item.Color;
+                                    }
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <span class="estatus-color-swatch" style="background-color: @itemColor;"></span>
+                                        <code class="small">@itemColor</code>
+                                    </span>
+                                </td>
+                                <td>
                                     @if (!string.IsNullOrEmpty(item.Descripcion))
                                     {
                                         <span>@Html.DisplayFor(modelItem => item.Descripcion)</span>
                                     }
                                     else
                                     {
-                                        <em class="text-muted">Sin descripciÛn</em>
+                                        <em class="text-muted">Sin descripciùn</em>
                                     }
                                 </td>
                                 <td>
@@ -98,5 +108,14 @@
         padding: 0.4rem 0.6rem;
         font-weight: 500;
         border-radius: 0.25rem;
+    }
+
+    .estatus-color-swatch {
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        border-radius: 0.35rem;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        vertical-align: middle;
     }
 </style>

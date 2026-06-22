@@ -221,6 +221,8 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="INICIO.txt" />
+    <Content Include="bs-calendar\dist\bs-calendar.js" />
+    <Content Include="bs-calendar\dist\bs-calendar.min.js" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
@@ -232,6 +234,7 @@
     <Content Include="Scripts\CreateAgendaTable.sql" />
     <Content Include="Scripts\CreateCatalogosTables.sql" />
     <Content Include="Scripts\CreateAgendaEstatusTable.sql" />
+    <Content Include="Scripts\AddColorToAgendaEstatus.sql" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
     <Content Include="Scripts\jquery-3.7.0.slim.js" />
