@@ -930,11 +930,16 @@
 
             function formatAppointmentHtml(appt) {
                 const raw = appt.title || '';
-                const idMatch = raw.match(/^#(\d+)\s*-\s*/);
+                const idMatch = raw.match(/(#\d+)\s*-\s*/);
                 if (idMatch) {
-                    const rest = raw.substring(idMatch[0].length);
-                    return '<span class="rooms-day-appt-id">#' + escapeHtml(idMatch[1]) + '</span>' +
-                        '<span class="rooms-day-appt-text">' + escapeHtml(rest) + '</span>';
+                    const idx = raw.indexOf(idMatch[0]);
+                    const before = raw.substring(0, idx);
+                    const rest = raw.substring(idx + idMatch[0].length);
+                    return (before
+                        ? '<span class="rooms-day-appt-room">' + escapeHtml(before.trim()) + ' </span>'
+                        : '') +
+                        '<span class="rooms-day-appt-id">' + escapeHtml(idMatch[1]) + '</span>' +
+                        '<span class="rooms-day-appt-text"> - ' + escapeHtml(rest) + '</span>';
                 }
                 return '<span class="rooms-day-appt-text">' + escapeHtml(raw) + '</span>';
             }
@@ -1429,13 +1434,27 @@
                 return isNaN(d.getTime()) ? null : toApiDateTime(d);
             }
 
+            function getClinicaNombre(props, clinicaId) {
+                props = props || {};
+                const fromProps = props.NombreClinica || props.nombreClinica;
+                if (fromProps) return fromProps;
+                const id = clinicaId || props.Clinica || props.clinica;
+                if (!id) return '';
+                const resource = calendarResources.find(function (r) { return String(r.id) === String(id); });
+                return resource ? (resource.title || resource.nombre || '') : '';
+            }
+
             function buildAppointmentTitle(ev, props) {
                 if (ev.title || ev.Title) return ev.title || ev.Title;
                 props = props || {};
                 const id = ev.id != null ? ev.id : (ev.Id != null ? ev.Id : (props.IdAgendaCita || props.idAgendaCita));
                 const asunto = props.Asunto || props.asunto || 'Reservación';
                 const contacto = props.Contacto || props.contacto || '';
-                let title = id ? ('#' + id + ' - ') : '';
+                const clinicaId = ev.resourceId || props.Clinica || props.clinica || '';
+                const clinicaNombre = getClinicaNombre(props, clinicaId);
+                let title = '';
+                if (clinicaNombre) title += clinicaNombre + ' ';
+                if (id) title += '#' + id + ' - ';
                 title += asunto;
                 if (contacto) title += ' - ' + contacto;
                 return title;
@@ -1450,6 +1469,7 @@
                 const estatus = props.Estatus || props.estatus;
                 const color = ev.backgroundColor || (estatus && estatusColors[estatus]) || '#667eea';
                 const clinica = ev.resourceId || props.Clinica || props.clinica || '';
+                const clinicaNombre = getClinicaNombre(props, clinica);
                 return {
                     id: String(ev.id != null ? ev.id : ev.Id),
                     title: buildAppointmentTitle(ev, props),
@@ -1458,6 +1478,7 @@
                     allDay: !!(ev.allDay || ev.AllDay || props.TodoelDia || props.todoelDia),
                     calendarId: String(clinica),
                     color: color,
+                    location: clinicaNombre || undefined,
                     cita: props
                 };
             }

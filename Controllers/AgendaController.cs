@@ -153,8 +153,16 @@ namespace Crud_agenda.Controllers
 
             var citas = query.OrderBy(x => x.Inicio).ToList();
             var estatusColors = LoadEstatusColors();
+            var citasClinicaIds = citas.Select(c => c.Clinica).Where(id => id > 0).Distinct().ToList();
+            var doctorIds = citas.Select(c => c.CodigoDoctor).Where(id => id > 0).Distinct().ToList();
+            var clinicaNames = db.AgendaClinica
+                .Where(c => citasClinicaIds.Contains(c.IdClinica))
+                .ToDictionary(c => c.IdClinica, c => c.NombreClinica);
+            var doctors = db.AgendaDoctor
+                .Where(d => doctorIds.Contains(d.CodigoDoctor))
+                .ToDictionary(d => d.CodigoDoctor);
 
-            var events = citas.Select(c => MapToEventDto(c, estatusColors)).ToList();
+            var events = citas.Select(c => MapToEventDto(c, estatusColors, clinicaNames, doctors)).ToList();
             return Json(events, JsonRequestBehavior.AllowGet);
         }
 
@@ -372,7 +380,7 @@ namespace Crud_agenda.Controllers
             };
         }
 
-        private static object MapToExtendedProps(Agenda cita)
+        private static object MapToExtendedProps(Agenda cita, string nombreClinica = null)
         {
             return new
             {
@@ -382,6 +390,7 @@ namespace Crud_agenda.Controllers
                 CodigoDoctor = cita.CodigoDoctor,
                 Codigo = cita.Codigo,
                 Clinica = cita.Clinica,
+                NombreClinica = nombreClinica,
                 NoFichaIngreso = cita.NoFichaIngreso,
                 Contacto = cita.Contacto,
                 Inicio = AgendaDateHelper.FormatWallClock(cita.Inicio),
@@ -417,11 +426,29 @@ namespace Crud_agenda.Controllers
             return est != null && !string.IsNullOrWhiteSpace(est.Color) ? est.Color : "#667eea";
         }
 
-        private AgendaEventDto MapToEventDto(Agenda cita, Dictionary<int, string> estatusColors = null)
+        private AgendaEventDto MapToEventDto(
+            Agenda cita,
+            Dictionary<int, string> estatusColors = null,
+            Dictionary<int, string> clinicaNames = null,
+            Dictionary<int, AgendaDoctor> doctors = null)
         {
             var color = GetEstatusColor(cita.Estatus, estatusColors);
-            var doctor = db.AgendaDoctor.Find(cita.CodigoDoctor);
-            var title = BuildAppointmentTitle(cita, doctor);
+            AgendaDoctor doctor = null;
+            if (doctors != null)
+                doctors.TryGetValue(cita.CodigoDoctor, out doctor);
+            else if (cita.CodigoDoctor > 0)
+                doctor = db.AgendaDoctor.Find(cita.CodigoDoctor);
+
+            string nombreClinica = null;
+            if (clinicaNames != null)
+                clinicaNames.TryGetValue(cita.Clinica, out nombreClinica);
+            else if (cita.Clinica > 0)
+            {
+                var clinica = db.AgendaClinica.Find(cita.Clinica);
+                nombreClinica = clinica?.NombreClinica;
+            }
+
+            var title = BuildAppointmentTitle(cita, doctor, nombreClinica);
 
             return new AgendaEventDto
             {
@@ -434,13 +461,16 @@ namespace Crud_agenda.Controllers
                 backgroundColor = color,
                 borderColor = color,
                 textColor = "#ffffff",
-                extendedProps = MapToExtendedProps(cita)
+                extendedProps = MapToExtendedProps(cita, nombreClinica)
             };
         }
 
-        private static string BuildAppointmentTitle(Agenda cita, AgendaDoctor doctor)
+        private static string BuildAppointmentTitle(Agenda cita, AgendaDoctor doctor, string nombreClinica)
         {
-            var title = "#" + cita.IdAgendaCita + " - " + cita.Asunto + " - " + cita.Contacto;
+            var title = string.Empty;
+            if (!string.IsNullOrWhiteSpace(nombreClinica))
+                title += nombreClinica + " ";
+            title += "#" + cita.IdAgendaCita + " - " + cita.Asunto + " - " + cita.Contacto;
             if (doctor != null)
                 title += " (" + doctor.NombreDoctor + ")";
             return title;
