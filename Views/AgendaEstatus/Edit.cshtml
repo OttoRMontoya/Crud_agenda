@@ -45,7 +45,7 @@
                         @if (Model.FechaModificacion.HasValue)
                         {
                             <br />
-                            <strong>ùltima modificaciùn:</strong> @Model.FechaModificacion.Value.ToString("dd/MM/yyyy HH:mm")
+                            <strong>ÔøΩltima modificaciÔøΩn:</strong> @Model.FechaModificacion.Value.ToString("dd/MM/yyyy HH:mm")
                         }
                     </div>
 
@@ -57,7 +57,7 @@
 
                     <div class="mb-3">
                         @Html.LabelFor(model => model.Descripcion, new { @class = "form-label" })
-                        @Html.TextAreaFor(model => model.Descripcion, new { @class = "form-control", @rows = "4", @placeholder = "Descripciùn del estado..." })
+                        @Html.TextAreaFor(model => model.Descripcion, new { @class = "form-control", @rows = "4", @placeholder = "DescripciÔøΩn del estado..." })
                         @Html.ValidationMessageFor(model => model.Descripcion, "", new { @class = "text-danger small" })
                     </div>
 

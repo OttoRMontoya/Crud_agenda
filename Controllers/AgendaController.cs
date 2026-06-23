@@ -219,6 +219,9 @@ namespace Crud_agenda.Controllers
                 return Json(new { success = false, message = "La fecha de fin debe ser posterior al inicio." });
             }
 
+            model.Inicio = AgendaDateHelper.EnsureWallClock(model.Inicio);
+            model.Fin = AgendaDateHelper.EnsureWallClock(model.Fin);
+
             Agenda cita;
 
             if (model.IdAgendaCita > 0)
@@ -273,21 +276,29 @@ namespace Crud_agenda.Controllers
         }
 
         [HttpPost]
-        public JsonResult UpdateDates(int id, DateTime inicio, DateTime fin, bool todoelDia, int? clinica = null)
+        public JsonResult UpdateDates(int id, string inicio, string fin, bool todoelDia, int? clinica = null)
         {
+            DateTime inicioDt;
+            DateTime finDt;
+            if (!AgendaDateHelper.TryParseWallClock(inicio, out inicioDt) ||
+                !AgendaDateHelper.TryParseWallClock(fin, out finDt))
+            {
+                return Json(new { success = false, message = "Fechas inválidas." });
+            }
+
             var cita = db.Agenda.Find(id);
             if (cita == null)
             {
                 return Json(new { success = false, message = "Reservación no encontrada." });
             }
 
-            if (fin <= inicio)
+            if (finDt <= inicioDt)
             {
                 return Json(new { success = false, message = "La fecha de fin debe ser posterior al inicio." });
             }
 
-            cita.Inicio = inicio;
-            cita.Fin = fin;
+            cita.Inicio = inicioDt;
+            cita.Fin = finDt;
             cita.TodoelDia = todoelDia;
 
             if (clinica.HasValue && clinica.Value > 0)
@@ -373,8 +384,8 @@ namespace Crud_agenda.Controllers
                 Clinica = cita.Clinica,
                 NoFichaIngreso = cita.NoFichaIngreso,
                 Contacto = cita.Contacto,
-                Inicio = cita.Inicio.ToString("o"),
-                Fin = cita.Fin.ToString("o"),
+                Inicio = AgendaDateHelper.FormatWallClock(cita.Inicio),
+                Fin = AgendaDateHelper.FormatWallClock(cita.Fin),
                 Asunto = cita.Asunto,
                 Descripcion = cita.Descripcion,
                 Lugar = cita.Lugar,
@@ -410,16 +421,14 @@ namespace Crud_agenda.Controllers
         {
             var color = GetEstatusColor(cita.Estatus, estatusColors);
             var doctor = db.AgendaDoctor.Find(cita.CodigoDoctor);
-            var title = cita.Asunto + " - " + cita.Contacto;
-            if (doctor != null)
-                title += " (" + doctor.NombreDoctor + ")";
+            var title = BuildAppointmentTitle(cita, doctor);
 
             return new AgendaEventDto
             {
                 id = cita.IdAgendaCita,
                 title = title,
-                start = cita.Inicio.ToString("o"),
-                end = cita.Fin.ToString("o"),
+                start = AgendaDateHelper.FormatWallClock(cita.Inicio),
+                end = AgendaDateHelper.FormatWallClock(cita.Fin),
                 allDay = cita.TodoelDia,
                 resourceId = cita.Clinica > 0 ? cita.Clinica.ToString() : null,
                 backgroundColor = color,
@@ -427,6 +436,14 @@ namespace Crud_agenda.Controllers
                 textColor = "#ffffff",
                 extendedProps = MapToExtendedProps(cita)
             };
+        }
+
+        private static string BuildAppointmentTitle(Agenda cita, AgendaDoctor doctor)
+        {
+            var title = "#" + cita.IdAgendaCita + " - " + cita.Asunto + " - " + cita.Contacto;
+            if (doctor != null)
+                title += " (" + doctor.NombreDoctor + ")";
+            return title;
         }
 
         protected override void Dispose(bool disposing)

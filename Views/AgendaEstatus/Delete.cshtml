@@ -15,7 +15,7 @@
             <div class="card-body">
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
                     <i class="bi bi-exclamation-triangle"></i>
-                    <strong>Atencin!</strong> Esta accin no puede ser revertida. Est seguro de que desea eliminar este estado?
+                    <strong>ï¿½Atenciï¿½n!</strong> Esta acciï¿½n no puede ser revertida. ï¿½Estï¿½ seguro de que desea eliminar este estado?
                 </div>
 
                 <div class="row mb-4">
@@ -27,14 +27,14 @@
 
                 <div class="row mb-4">
                     <div class="col-md-12">
-                        <h6 class="text-muted mb-2">Descripcin</h6>
+                        <h6 class="text-muted mb-2">Descripciï¿½n</h6>
                         @if (!string.IsNullOrEmpty(Model.Descripcion))
                         {
                             <p>@Model.Descripcion</p>
                         }
                         else
                         {
-                            <p class="text-muted"><em>Sin descripcin</em></p>
+                            <p class="text-muted"><em>Sin descripciï¿½n</em></p>
                         }
                     </div>
                 </div>
@@ -54,7 +54,7 @@
 
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Fecha de Creacin</h6>
+                        <h6 class="text-muted mb-2">Fecha de Creaciï¿½n</h6>
                         <p>@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm:ss")</p>
                     </div>
                     <div class="col-md-6">
@@ -83,7 +83,7 @@
                     @Html.AntiForgeryToken()
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-check-circle"></i> S, Eliminar
+                            <i class="bi bi-check-circle"></i> Sï¿½, Eliminar
                         </button>
                         @Html.ActionLink("Cancelar", "Index", new { }, new { @class = "btn btn-secondary" })
                     </div>

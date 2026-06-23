@@ -17,22 +17,22 @@ namespace Crud_agenda.Models
         public string NombreEstatus { get; set; }
 
         [StringLength(500)]
-        [Display(Name = "Descripción")]
+        [Display(Name = "Descripciï¿½n")]
         public string Descripcion { get; set; }
 
         [Required(ErrorMessage = "El color es requerido")]
         [StringLength(7)]
         [Display(Name = "Color")]
-        [RegularExpression(@"^#[0-9A-Fa-f]{6}$", ErrorMessage = "El color debe ser un código hexadecimal válido (ej: #667eea)")]
+        [RegularExpression(@"^#[0-9A-Fa-f]{6}$", ErrorMessage = "El color debe ser un cï¿½digo hexadecimal vï¿½lido (ej: #667eea)")]
         public string Color { get; set; }
 
         [Display(Name = "Activo")]
         public bool Activo { get; set; }
 
-        [Display(Name = "Fecha de Creación")]
+        [Display(Name = "Fecha de Creaciï¿½n")]
         public DateTime FechaCreacion { get; set; }
 
-        [Display(Name = "Fecha de Modificación")]
+        [Display(Name = "Fecha de Modificaciï¿½n")]
         public DateTime? FechaModificacion { get; set; }
     }
 }

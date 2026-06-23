@@ -68,10 +68,10 @@
                 </div>
             </div>
             <div class="calendar-view-switcher btn-group mb-3" role="group" aria-label="Vista del calendario">
-                <button type="button" class="btn btn-outline-primary active" data-calendar-view="rooms-day">
+                <button type="button" class="btn btn-outline-primary" data-calendar-view="rooms-day">
                     <i class="bi bi-calendar-day"></i> Día
                 </button>
-                <button type="button" class="btn btn-outline-primary" data-calendar-view="week">
+                <button type="button" class="btn btn-outline-primary active" data-calendar-view="week">
                     <i class="bi bi-kanban"></i> Semana
                 </button>
                 <button type="button" class="btn btn-outline-primary" data-calendar-view="month">
@@ -81,7 +81,7 @@
                     <i class="bi bi-list-ul"></i> Agenda
                 </button>
             </div>
-            <div id="roomsDayView">
+            <div id="roomsDayView" class="d-none">
                 <div class="rooms-day-toolbar d-flex flex-wrap align-items-center gap-3 mb-2">
                     <div class="btn-group btn-group-sm">
                         <button type="button" class="btn btn-primary" id="roomsDayPrev" title="Día anterior">
@@ -96,7 +96,7 @@
                 </div>
                 <div id="roomsDayGrid" class="rooms-day-scroll"></div>
             </div>
-            <div id="calendar" class="d-none"></div>
+            <div id="calendar"></div>
         </div>
     </div>
 </div>
@@ -318,12 +318,19 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
 
+        .calendar-card .card-body {
+            overflow: visible;
+        }
+
         .calendar-filters {
             min-width: 200px;
+            position: relative;
+            z-index: 1100;
         }
 
         .filtro-clinicas-dropdown {
             min-width: 260px;
+            position: relative;
         }
 
         .filtro-clinicas-toggle {
@@ -358,8 +365,13 @@
         }
 
         .filtro-clinicas-menu {
-            max-height: 260px;
+            max-height: 280px;
             overflow: hidden;
+            z-index: 1100 !important;
+        }
+
+        .filtro-clinicas-menu.show {
+            z-index: 1100 !important;
         }
 
         .filtro-clinicas-checkboxes {
@@ -406,6 +418,8 @@
 
         #calendar {
             min-height: 700px;
+            position: relative;
+            z-index: 1;
         }
 
         .calendar-view-switcher .btn.active {
@@ -550,6 +564,12 @@
             white-space: nowrap;
         }
 
+        .rooms-day-appt-id {
+            font-weight: 700;
+            margin-right: 3px;
+            pointer-events: none;
+        }
+
         .rooms-day-appt-resize {
             position: absolute;
             left: 0;
@@ -651,7 +671,35 @@
             };
 
             const modalEl = document.getElementById('modalCita');
-            const modal = new bootstrap.Modal(modalEl);
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+            function resetToFirstTab() {
+                const tabEl = document.querySelector('#modalCita .nav-link[data-bs-target="#tabCita"]');
+                if (tabEl) {
+                    bootstrap.Tab.getOrCreateInstance(tabEl).show();
+                }
+            }
+
+            function showModalSafe() {
+                return new Promise(function (resolve) {
+                    const instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    if (modalEl.classList.contains('show')) {
+                        resolve(instance);
+                        return;
+                    }
+                    function showIt() {
+                        modalEl.addEventListener('shown.bs.modal', function () {
+                            resolve(instance);
+                        }, { once: true });
+                        instance.show();
+                    }
+                    if (document.body.classList.contains('modal-open')) {
+                        modalEl.addEventListener('hidden.bs.modal', showIt, { once: true });
+                    } else {
+                        showIt();
+                    }
+                });
+            }
             const form = document.getElementById('formCita');
             const modalAlert = document.getElementById('modalAlert');
             const btnEliminar = document.getElementById('btnEliminarCita');
@@ -663,7 +711,7 @@
             const ROOMS_HOUR_END = 22;
             const ROOMS_SLOT_MINUTES = 30;
             const ROOMS_PX_PER_MINUTE = 1;
-            let currentCalendarView = 'rooms-day';
+            let currentCalendarView = 'month';
             const roomsDayState = {
                 currentDate: new Date(),
                 appointments: []
@@ -779,6 +827,11 @@
                     'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
             }
 
+            /** Hora local sin conversión a UTC (evita desfase al publicar en servidor remoto). */
+            function toApiDateTime(date) {
+                return formatBsDateTime(date);
+            }
+
             function isSameCalendarDay(a, b) {
                 if (!a || !b) return false;
                 return a.getFullYear() === b.getFullYear() &&
@@ -875,6 +928,17 @@
                 return fetchEventsFromApi(dateStr + 'T00:00:00', dateStr + 'T23:59:59');
             }
 
+            function formatAppointmentHtml(appt) {
+                const raw = appt.title || '';
+                const idMatch = raw.match(/^#(\d+)\s*-\s*/);
+                if (idMatch) {
+                    const rest = raw.substring(idMatch[0].length);
+                    return '<span class="rooms-day-appt-id">#' + escapeHtml(idMatch[1]) + '</span>' +
+                        '<span class="rooms-day-appt-text">' + escapeHtml(rest) + '</span>';
+                }
+                return '<span class="rooms-day-appt-text">' + escapeHtml(raw) + '</span>';
+            }
+
             function buildRoomsDayApptElement(item) {
                 const color = getAppointmentColor(item.appt);
                 const el = document.createElement('div');
@@ -883,7 +947,7 @@
                 el.title = item.appt.title;
                 el.style.cssText = 'top:' + item.top + 'px;height:' + item.height + 'px;left:calc(' + item.leftPct +
                     '% + 2px);width:calc(' + item.widthPct + '% - 4px);background:' + color + ';border-color:' + color + ';';
-                el.innerHTML = '<span class="rooms-day-appt-text">' + escapeHtml(item.appt.title) + '</span>' +
+                el.innerHTML = formatAppointmentHtml(item.appt) +
                     '<div class="rooms-day-appt-resize"></div>';
                 return el;
             }
@@ -1022,7 +1086,7 @@
                             escapeHtml(item.appt.title) + '" style="top:' + item.top + 'px;height:' + item.height +
                             'px;left:calc(' + item.leftPct + '% + 2px);width:calc(' + item.widthPct + '% - 4px);background:' +
                             color + ';border-color:' + color + ';">' +
-                            '<span class="rooms-day-appt-text">' + escapeHtml(item.appt.title) + '</span>' +
+                            formatAppointmentHtml(item.appt) +
                             '<div class="rooms-day-appt-resize"></div></div>';
                     });
 
@@ -1137,8 +1201,8 @@
                             const end = new Date(start.getTime() + st.durationMs);
                             postRoomsDayUpdate(
                                 st.appt.id,
-                                start.toISOString(),
-                                end.toISOString(),
+                                toApiDateTime(start),
+                                toApiDateTime(end),
                                 st.appt.allDay,
                                 st.targetClinicaId || st.appt.calendarId,
                                 { id: st.appt.id, calendarId: st.appt.calendarId, start: st.appt.start }
@@ -1154,8 +1218,8 @@
                             const end = minutesToDate(roomsDayState.currentDate, st.endMinutes);
                             postRoomsDayUpdate(
                                 st.appt.id,
-                                start.toISOString(),
-                                end.toISOString(),
+                                toApiDateTime(start),
+                                toApiDateTime(end),
                                 st.appt.allDay,
                                 st.appt.calendarId,
                                 { id: st.appt.id, calendarId: st.appt.calendarId, start: st.appt.start }
@@ -1362,7 +1426,19 @@
 
             function toIsoFromDragPart(part) {
                 const d = parsePayloadDate(part);
-                return isNaN(d.getTime()) ? null : d.toISOString();
+                return isNaN(d.getTime()) ? null : toApiDateTime(d);
+            }
+
+            function buildAppointmentTitle(ev, props) {
+                if (ev.title || ev.Title) return ev.title || ev.Title;
+                props = props || {};
+                const id = ev.id != null ? ev.id : (ev.Id != null ? ev.Id : (props.IdAgendaCita || props.idAgendaCita));
+                const asunto = props.Asunto || props.asunto || 'Reservación';
+                const contacto = props.Contacto || props.contacto || '';
+                let title = id ? ('#' + id + ' - ') : '';
+                title += asunto;
+                if (contacto) title += ' - ' + contacto;
+                return title;
             }
 
             function mapEventToAppointment(ev) {
@@ -1376,7 +1452,7 @@
                 const clinica = ev.resourceId || props.Clinica || props.clinica || '';
                 return {
                     id: String(ev.id != null ? ev.id : ev.Id),
-                    title: ev.title || ev.Title || props.Asunto || props.asunto || 'Reservación',
+                    title: buildAppointmentTitle(ev, props),
                     start: formatBsDateTime(start),
                     end: formatBsDateTime(end),
                     allDay: !!(ev.allDay || ev.AllDay || props.TodoelDia || props.todoelDia),
@@ -1683,10 +1759,6 @@
                 hideAlert();
                 btnEliminar.classList.add('d-none');
                 modalTitulo.textContent = 'Nueva Reservación';
-                new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
-                loadEmpresas();
-                loadClinicas(null);
-                loadDoctores(null);
             }
 
             function fillForm(data, evtStart, evtEnd, evtAllDay) {
@@ -1775,7 +1847,7 @@
                 hideAlert();
                 btnEliminar.classList.add('d-none');
                 modalTitulo.textContent = 'Nueva Reservación';
-                new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
+                resetToFirstTab();
 
                 const startDate = start ? new Date(start) : new Date();
                 let endDate = end ? new Date(end) : new Date(startDate.getTime() + 60 * 60 * 1000);
@@ -1791,12 +1863,12 @@
                 document.getElementById('Fin').value = toLocalInputValue(endDate);
 
                 if (clinicaId) {
-                    preselectClinica(clinicaId).always(function () { modal.show(); });
+                    preselectClinica(clinicaId).always(function () { showModalSafe(); });
                 } else {
                     loadEmpresas().then(function () {
                         loadClinicas(null);
                         return loadDoctores(null);
-                    }).always(function () { modal.show(); });
+                    }).always(function () { showModalSafe(); });
                 }
             }
 
@@ -1807,11 +1879,14 @@
                     calendarId: props.Clinica || props.clinica,
                     start: evtStart || props.Inicio || props.inicio
                 };
-                new bootstrap.Tab(document.querySelector('#modalCita .nav-link')).show();
+                resetToFirstTab();
                 fillForm(props, evtStart, evtEnd, evtAllDay).then(function () {
-                    modalTitulo.textContent = 'Editar Reservación';
+                    const citaId = parseInt(document.getElementById('IdAgendaCita').value, 10);
+                    modalTitulo.textContent = citaId > 0
+                        ? 'Editar Reservación #' + citaId
+                        : 'Editar Reservación';
                     btnEliminar.classList.remove('d-none');
-                    modal.show();
+                    showModalSafe();
                 });
             }
 
@@ -2064,7 +2139,7 @@
             loadCalendarResources().then(function () {
                 return loadClinicasFiltro();
             }).then(function () {
-                setCalendarView('rooms-day');
+                setCalendarView('month');
             });
 
             modalEl.addEventListener('hidden.bs.modal', resetForm);

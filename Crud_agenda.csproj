@@ -193,6 +193,7 @@
     <Compile Include="Models\AgendaDoctor.cs" />
     <Compile Include="Models\AgendaEmpresa.cs" />
     <Compile Include="Models\AgendaEstatus.cs" />
+    <Compile Include="Models\AgendaDateHelper.cs" />
     <Compile Include="Models\AgendaViewModels.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
